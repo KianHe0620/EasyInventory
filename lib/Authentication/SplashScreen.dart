@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:easyinventory/Authentication/LoginScreen.dart';
+import 'package:easyinventory/authentication/LoginScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

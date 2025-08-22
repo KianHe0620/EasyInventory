@@ -1,4 +1,4 @@
-import 'package:easyinventory/Authentication/SplashScreen.dart';
+import 'package:easyinventory/authentication/SplashScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

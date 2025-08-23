@@ -12,7 +12,7 @@ class TextForm extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: GlobalColors.TextFieldColor,
+        color: GlobalColors.textFieldColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextFormField(
@@ -21,6 +21,7 @@ class TextForm extends StatelessWidget {
         obscureText: obscure,
         decoration: InputDecoration(
           hintText: text,
+          hintStyle: TextStyle(fontWeight: FontWeight.w400),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 12),
         ),

@@ -1,9 +1,9 @@
 import 'package:easyinventory/authentication/register.dart';
+import 'package:easyinventory/mainScreen.dart';
 import 'package:easyinventory/utils/global.colors.dart';
 import 'package:easyinventory/widgets/button.global.dart';
 import 'package:easyinventory/widgets/textForm.global.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get_connect/http/src/utils/utils.dart';
 
 class LoginScreen extends StatelessWidget {
   LoginScreen({super.key});
@@ -13,14 +13,13 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child:SafeArea(
+      body: SafeArea(
+        child:SingleChildScrollView(
           child:Container(
             width: double.infinity,
             padding: const EdgeInsets.all(15.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 //Title
                 Text('Login',
@@ -69,7 +68,11 @@ class LoginScreen extends StatelessWidget {
                   textColor: Colors.white, 
                   width: 0,
                   onTap: () {
-                    
+                    //Login Success
+                    Navigator.pushReplacement(
+                      context, 
+                      MaterialPageRoute(builder: (_) => const MainScreen()) 
+                    );
                   },),
 
                 //Divider Line

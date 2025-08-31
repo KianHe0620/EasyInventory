@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:easyinventory/utils/global.colors.dart';
+import 'package:easyinventory/view/utils/global.colors.dart';
 
 class ButtonGlobal extends StatelessWidget {
   ButtonGlobal({super.key, required this.boxColor, required this.text, required this.textColor, required this.width, required this.onTap});

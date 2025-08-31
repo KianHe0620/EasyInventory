@@ -1,5 +1,7 @@
 import 'package:easyinventory/authentication/splash.dart';
-import 'package:easyinventory/mainScreen.dart';
+import 'package:easyinventory/view/dashboard.dart';
+import 'package:easyinventory/view/mainScreen.dart';
+import 'package:easyinventory/view/suppliers/suppliers.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -17,7 +19,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white
       ),
-      home: SplashScreen(),
+      home: SuppliersPage(),
     );
   }
 }

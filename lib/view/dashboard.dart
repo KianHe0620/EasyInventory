@@ -1,4 +1,5 @@
-import 'package:easyinventory/utils/global.colors.dart';
+import 'package:easyinventory/view/suppliers/suppliers.dart';
+import 'package:easyinventory/view/utils/global.colors.dart';
 import 'package:flutter/material.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -67,7 +68,10 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                         child: InkWell(
                           onTap: (){
-                            //Navigate to Suppliers page
+                            Navigator.push(
+                              context, 
+                              MaterialPageRoute(builder: (_) => const SuppliersPage())
+                            );
                           },
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 20),

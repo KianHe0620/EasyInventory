@@ -1,8 +1,8 @@
-import 'package:easyinventory/dashboard.dart';
-import 'package:easyinventory/items.dart';
-import 'package:easyinventory/sell.dart';
-import 'package:easyinventory/settings.dart';
-import 'package:easyinventory/widgets/bottomNavigationBar.global.dart';
+import 'package:easyinventory/view/dashboard.dart';
+import 'package:easyinventory/view/items/items.dart';
+import 'package:easyinventory/view/sell/sell.dart';
+import 'package:easyinventory/view/settings/settings.dart';
+import 'package:easyinventory/view/widgets/bottomNavigationBar.global.dart';
 import 'package:flutter/material.dart';
 
 class MainScreen extends StatefulWidget {

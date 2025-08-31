@@ -1,8 +1,8 @@
 import 'package:easyinventory/authentication/register.dart';
-import 'package:easyinventory/mainScreen.dart';
-import 'package:easyinventory/utils/global.colors.dart';
-import 'package:easyinventory/widgets/button.global.dart';
-import 'package:easyinventory/widgets/textForm.global.dart';
+import 'package:easyinventory/view/mainScreen.dart';
+import 'package:easyinventory/view/utils/global.colors.dart';
+import 'package:easyinventory/view/widgets/button.global.dart';
+import 'package:easyinventory/view/widgets/textForm.global.dart';
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatelessWidget {

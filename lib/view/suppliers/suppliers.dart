@@ -1,5 +1,6 @@
 import 'package:easyinventory/controller/supplier.controller.dart';
 import 'package:easyinventory/view/suppliers/addSupplier.dart';
+import 'package:easyinventory/view/suppliers/editSupplier.dart';
 import 'package:easyinventory/view/widgets/appBar.global.dart';
 import 'package:easyinventory/view/widgets/floatingAddBtn.global.dart';
 import 'package:easyinventory/view/widgets/search.global.dart';
@@ -81,7 +82,12 @@ class _SuppliersPageState extends State<SuppliersPage> {
                     dense: true,
                     title: Text(supplier),
                     onTap: () {
-                      // 点击逻辑
+                      Navigator.push(
+                        context, 
+                        MaterialPageRoute(
+                          builder: (_) => EditSupplierPage(supplier: supplier)
+                        )
+                      );
                     },
                   ),
                 );

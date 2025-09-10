@@ -1,5 +1,5 @@
-import 'package:easyinventory/view/widgets/appBar.global.dart';
-import 'package:easyinventory/view/widgets/textForm.global.dart';
+import 'package:easyinventory/views/widgets/app_bar.global.dart';
+import 'package:easyinventory/views/widgets/text_form.global.dart';
 import 'package:flutter/material.dart';
 
 class AddSupplierPage extends StatefulWidget {

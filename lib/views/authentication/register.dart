@@ -1,12 +1,11 @@
-import 'package:easyinventory/authentication/register.dart';
-import 'package:easyinventory/view/mainScreen.dart';
-import 'package:easyinventory/view/utils/global.colors.dart';
-import 'package:easyinventory/view/widgets/button.global.dart';
-import 'package:easyinventory/view/widgets/textForm.global.dart';
+import 'package:easyinventory/views/authentication/Login.dart';
+import 'package:easyinventory/views/utils/global.colors.dart';
+import 'package:easyinventory/views/widgets/button.global.dart';
+import 'package:easyinventory/views/widgets/text_form.global.dart';
 import 'package:flutter/material.dart';
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
+class RegisterScreen extends StatelessWidget {
+  RegisterScreen({super.key});
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -14,15 +13,15 @@ class LoginScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child:SingleChildScrollView(
-          child:Container(
+        child: SingleChildScrollView(
+          child: Container(
             width: double.infinity,
             padding: const EdgeInsets.all(15.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 //Title
-                Text('Login',
+                Text('Register',
                 style: TextStyle(fontSize: 35,fontWeight: FontWeight.bold)),
                 SizedBox(height: 30),
 
@@ -44,35 +43,26 @@ class LoginScreen extends StatelessWidget {
                       textInputType: TextInputType.text,
                       obscure: true,
                     ),
+                    const SizedBox(height: 15),
+
+                    TextForm(
+                      controller: passwordController,
+                      text: 'Confirm Password',
+                      textInputType: TextInputType.text,
+                      obscure: true,
+                    ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                //Forgot Password
-                Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(onPressed: (){
-                      //ForgotPasswordLink
-                      }, 
-                      child: Text(
-                        "Forgot Password?",
-                        style: TextStyle(color:GlobalColors.mainColor),
-                      )
-                    ),
-                  ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 30),
 
                 //Login Button
                 ButtonGlobal(
                   boxColor: GlobalColors.mainColor, 
-                  text: 'Log In', 
+                  text: 'Register', 
                   textColor: Colors.white, 
                   width: 0,
                   onTap: () {
-                    //Login Success
-                    Navigator.pushReplacement(
-                      context, 
-                      MaterialPageRoute(builder: (_) => const MainScreen()) 
-                    );
+
                   },),
 
                 //Divider Line
@@ -111,17 +101,17 @@ class LoginScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children:[
-                    Text('Register a new account?'),
+                    Text('Already own an account?'),
                     TextButton(onPressed: (){
                       Navigator.push(
                         context, 
                         MaterialPageRoute(
-                          builder: (context)=> RegisterScreen()
+                          builder: (context)=> LoginScreen()
                         )
                       );
                     }, 
                     child: Text(
-                      'Register',
+                      'Login',
                       style: TextStyle(
                         color: GlobalColors.mainColor,
                         fontSize: 18,

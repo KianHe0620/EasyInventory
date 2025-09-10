@@ -1,4 +1,4 @@
-import 'package:easyinventory/view/utils/global.colors.dart';
+import 'package:easyinventory/views/utils/global.colors.dart';
 import 'package:flutter/material.dart';
 
 class FloatingAddBtn extends StatelessWidget {

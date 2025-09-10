@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:easyinventory/view/utils/global.colors.dart';
+import 'package:easyinventory/views/utils/global.colors.dart';
 
 class TextForm extends StatelessWidget {
   const TextForm({

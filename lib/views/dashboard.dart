@@ -1,5 +1,5 @@
-import 'package:easyinventory/view/suppliers/suppliers.dart';
-import 'package:easyinventory/view/utils/global.colors.dart';
+import 'package:easyinventory/views/suppliers/suppliers.dart';
+import 'package:easyinventory/views/utils/global.colors.dart';
 import 'package:flutter/material.dart';
 
 class DashboardPage extends StatefulWidget {

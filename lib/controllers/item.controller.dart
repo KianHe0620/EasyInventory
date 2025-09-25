@@ -1,11 +1,20 @@
+import 'package:flutter/foundation.dart';
 import '../models/item.model.dart';
 
-class ItemController {
+class ItemController extends ChangeNotifier {
   final List<Item> items = [];
-  String sortBy = "Name";
-  bool isAscending = true; // ✅ Track sorting order
 
-    ItemController() {
+  // Search, filter & sort state
+  String searchQuery = "";
+  Set<String> activeFields = {}; // empty = all
+  String sortBy = "Name";
+  bool ascending = true;
+
+  // Selection mode state
+  bool selectionMode = false;
+  final Set<String> selectedIds = {};
+
+  ItemController() {
     // Mock data (demo purposes only)
     items.addAll([
       Item(
@@ -18,7 +27,7 @@ class ItemController {
         barcode: "111111",
         supplier: "Cat Food Supplier",
         field: "Pet",
-        imagePath: "", // leave empty → fallback to icon
+        imagePath: "",
       ),
       Item(
         id: "2",
@@ -30,7 +39,7 @@ class ItemController {
         barcode: "222222",
         supplier: "Dog Toy Supplier",
         field: "Pet",
-        imagePath: "", 
+        imagePath: "",
       ),
       Item(
         id: "3",
@@ -42,36 +51,69 @@ class ItemController {
         barcode: "333333",
         supplier: "Orange Supplier",
         field: "Food",
-        imagePath: "", 
+        imagePath: "",
       ),
     ]);
 
-    sortItems(sortBy); // ✅ ensure initial sorting
+    sortItems(sortBy);
   }
 
+  // --- CRUD ---
   void addItem(Item item) {
     items.add(item);
-    sortItems(sortBy); // keep sorted after add
+    sortItems(sortBy);
+    notifyListeners();
   }
 
   void updateItem(int index, Item updated) {
     items[index] = updated;
-    sortItems(sortBy); // keep sorted after update
+    sortItems(sortBy);
+    notifyListeners();
   }
 
   void deleteItem(Item item) {
     items.remove(item);
+    notifyListeners();
+  }
+
+  void deleteSelected() {
+    items.removeWhere((it) => selectedIds.contains(it.id));
+    selectedIds.clear();
+    selectionMode = false;
+    notifyListeners();
+  }
+
+  // --- Filtering, Searching, Sorting ---
+  void setSearchQuery(String query) {
+    searchQuery = query.trim().toLowerCase();
+    notifyListeners();
+  }
+
+  void applyFilter(Set<String> fields, String sort, bool asc) {
+    activeFields = fields;
+    sortBy = sort;
+    ascending = asc;
+    sortItems(sortBy);
+    notifyListeners();
+  }
+
+  void resetFilters() {
+    activeFields.clear();
+    sortBy = "Name";
+    ascending = true;
+    notifyListeners();
   }
 
   void toggleSortOrder() {
-    isAscending = !isAscending;
+    ascending = !ascending;
     sortItems(sortBy);
+    notifyListeners();
   }
 
   void sortItems(String criteria) {
     sortBy = criteria;
 
-    int order(int compare) => isAscending ? compare : -compare;
+    int order(int cmp) => ascending ? cmp : -cmp;
 
     switch (criteria) {
       case "Quantity":
@@ -80,10 +122,52 @@ class ItemController {
       case "Price":
         items.sort((a, b) => order(a.sellingPrice.compareTo(b.sellingPrice)));
         break;
+      case "Field":
+        items.sort((a, b) => order(a.field.compareTo(b.field)));
+        break;
       case "Name":
       default:
         items.sort((a, b) => order(a.name.compareTo(b.name)));
         break;
     }
+  }
+
+  List<Item> getFilteredSortedItems() {
+    final filtered = items.where((item) {
+      if (searchQuery.isNotEmpty) {
+        final query = searchQuery.toLowerCase();
+
+        final matchName = item.name.toLowerCase().contains(query);
+        final matchBarcode = item.barcode.contains(query); // keep order exact
+
+        if (!matchName && !matchBarcode) {
+          return false;
+        }
+      }
+
+      if (activeFields.isNotEmpty && !activeFields.contains(item.field)) {
+        return false;
+      }
+      return true;
+    }).toList();
+
+    return filtered;
+  }
+
+
+  // --- Selection mode ---
+  void toggleSelectionMode() {
+    selectionMode = !selectionMode;
+    if (!selectionMode) selectedIds.clear();
+    notifyListeners();
+  }
+
+  void toggleSelection(String id) {
+    if (selectedIds.contains(id)) {
+      selectedIds.remove(id);
+    } else {
+      selectedIds.add(id);
+    }
+    notifyListeners();
   }
 }

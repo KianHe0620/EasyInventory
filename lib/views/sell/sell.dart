@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../controllers/item.controller.dart';
 import '../../controllers/sell.controller.dart';
-import '../../models/item.model.dart';
+import '../sell/sale_history.page.dart';
 import '../widgets/quantity_box.global.dart';
 
 class SellPage extends StatefulWidget {
   final ItemController itemController;
+  final SellController sellController; // ✅ passed from ItemsPage
 
-  const SellPage({super.key, required this.itemController});
+  const SellPage({
+    super.key,
+    required this.itemController,
+    required this.sellController,
+  });
 
   @override
   State<SellPage> createState() => _SellPageState();
@@ -19,12 +24,14 @@ class _SellPageState extends State<SellPage> {
   @override
   void initState() {
     super.initState();
-    sellController = SellController(itemController: widget.itemController);
+    sellController = widget.sellController; // ✅ use shared instance
   }
 
   @override
   Widget build(BuildContext context) {
-    final items = widget.itemController.getFilteredSortedItems();
+    final cartItems = widget.itemController.items
+        .where((it) => sellController.getQuantity(it.id) > 0)
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -39,7 +46,13 @@ class _SellPageState extends State<SellPage> {
           IconButton(
             icon: const Icon(Icons.history),
             onPressed: () {
-              // TODO: navigate to sales history
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) =>
+                      SaleHistoryPage(sellController: sellController),
+                ),
+              );
             },
           ),
         ],
@@ -47,72 +60,66 @@ class _SellPageState extends State<SellPage> {
       body: Column(
         children: [
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.all(12),
-              itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (ctx, idx) {
-                final it = items[idx];
-
-                  return Container(
+            child: cartItems.isEmpty
+                ? const Center(child: Text("Cart is empty. Add items first."))
+                : ListView.separated(
                     padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(12),
-                      color: Colors.white,
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // 📷 Image
-                        it.imagePath.isNotEmpty
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.asset(
-                                  it.imagePath,
-                                  width: 50,
-                                  height: 50,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                            : const Icon(Icons.image, size: 50, color: Colors.grey),
-                        const SizedBox(width: 12),
-
-                        // 📝 Name & Price
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                it.name,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'RM ${it.sellingPrice.toStringAsFixed(2)}',
-                                style: const TextStyle(color: Colors.black54, fontSize: 14),
-                              ),
-                            ],
-                          ),
+                    itemCount: cartItems.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (ctx, idx) {
+                      final it = cartItems[idx];
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.white,
                         ),
-
-                        // 🔢 QuantityBox (no label)
-                        QuantityBox(
-                          label: '', // No top label
-                          value: sellController.getQuantity(it.id),
-                          onChanged: (val) {
-                            setState(() {
-                              sellController.setQuantity(it.id, val);
-                            });
-                          },
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            it.imagePath.isNotEmpty
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.asset(
+                                      it.imagePath,
+                                      width: 50,
+                                      height: 50,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                : const Icon(Icons.image,
+                                    size: 50, color: Colors.grey),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(it.name,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16)),
+                                  const SizedBox(height: 4),
+                                  Text('RM ${it.sellingPrice.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                          color: Colors.black54, fontSize: 14)),
+                                ],
+                              ),
+                            ),
+                            QuantityBox(
+                              label: '',
+                              value: sellController.getQuantity(it.id),
+                              onChanged: (val) {
+                                setState(() {
+                                  sellController.setQuantity(it.id, val);
+                                });
+                              },
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  );
-
-              },
-            ),
+                      );
+                    },
+                  ),
           ),
           Container(
             padding: const EdgeInsets.all(16),
@@ -125,11 +132,20 @@ class _SellPageState extends State<SellPage> {
               children: [
                 Text(
                   'Total: RM ${sellController.totalAmount.toStringAsFixed(2)}',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton(
                   onPressed: () {
+                    if (sellController.saleQuantities.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text("Cart is empty! Please add items.")),
+                      );
+                      return;
+                    }
+
                     final err = sellController.validate();
                     if (err != null) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -137,6 +153,7 @@ class _SellPageState extends State<SellPage> {
                       );
                       return;
                     }
+
                     final sale = sellController.commitSale();
                     showDialog(
                       context: context,

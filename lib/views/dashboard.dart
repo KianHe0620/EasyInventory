@@ -1,21 +1,21 @@
 import 'package:easyinventory/views/suppliers/suppliers.dart';
 import 'package:easyinventory/views/utils/global.colors.dart';
 import 'package:flutter/material.dart';
+import '../../controllers/sell.controller.dart';
 
-class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+class DashboardPage extends StatelessWidget {
+  final SellController sellController;
 
-  @override
-  State<DashboardPage> createState() => _DashboardPageState();
-}
+  const DashboardPage({super.key, required this.sellController});
 
-class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
+    final todayProfit = sellController.getTodayProfit();
+
     return Scaffold(
       body: SafeArea(
-        child:SingleChildScrollView(
-          child:Container(
+        child: SingleChildScrollView(
+          child: Container(
             width: double.infinity,
             padding: const EdgeInsets.all(15.0),
             child: Column(
@@ -23,42 +23,37 @@ class _DashboardPageState extends State<DashboardPage> {
               children: [
                 //Title
                 const Text('Dashboard',
-                style: TextStyle(fontSize: 35,fontWeight: FontWeight.bold)),
-                SizedBox(height: 30),
+                    style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 30),
 
                 //Profit Card
                 SizedBox(
                   width: double.infinity,
                   child: Card(
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)
-                    ),
+                        borderRadius: BorderRadius.circular(12)),
                     elevation: 2,
                     color: GlobalColors.textFieldColor,
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         children: [
-                          Text("Today's Profit"),
-                          SizedBox(height: 10),
-                          //Retrieve the data from database
+                          const Text("Today's Profit"),
+                          const SizedBox(height: 10),
                           Text(
-                            "RM1000.00",
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold
-                            ),
+                            "RM ${todayProfit.toStringAsFixed(2)}",
+                            style: const TextStyle(
+                                fontSize: 24, fontWeight: FontWeight.bold),
                           )
                         ],
                       ),
                     ),
-                  )
+                  ),
                 ),
 
                 //Row of buttons
                 Row(
                   children: [
-
                     //Suppliers Button
                     Expanded(
                       child: Card(
@@ -67,26 +62,27 @@ class _DashboardPageState extends State<DashboardPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: InkWell(
-                          onTap: (){
+                          onTap: () {
                             Navigator.push(
-                              context, 
-                              MaterialPageRoute(builder: (_) => const SuppliersPage())
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const SuppliersPage()),
                             );
                           },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20),
                             child: Column(
-                              children: const [
+                              children: [
                                 Icon(Icons.group, size: 40),
                                 SizedBox(height: 8),
                                 Text("Suppliers")
                               ],
                             ),
                           ),
-                        )
-                      )
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(width: 12),
 
                     //Report Button
                     Expanded(
@@ -96,29 +92,29 @@ class _DashboardPageState extends State<DashboardPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: InkWell(
-                          onTap: (){
-                            //Navigate to Report page
+                          onTap: () {
+                            // TODO: Navigate to Report page
                           },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20),
                             child: Column(
-                              children: const [
+                              children: [
                                 Icon(Icons.bar_chart, size: 40),
                                 SizedBox(height: 8),
                                 Text("Report")
                               ],
                             ),
                           ),
-                        )
-                      )
+                        ),
+                      ),
                     ),
                   ],
                 )
-              ]
-            )
-          )
-        )
-      )
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

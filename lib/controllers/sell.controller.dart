@@ -9,6 +9,9 @@ class SellController extends ChangeNotifier {
   /// Map of itemId → quantity to sell
   final Map<String, int> saleQuantities = {};
 
+  /// Store completed sales
+  final List<Sell> salesHistory = [];
+
   SellController({required this.itemController});
 
   /// Initialize saleQuantities to zero (or clear)
@@ -19,8 +22,11 @@ class SellController extends ChangeNotifier {
 
   /// Set how many units of `item` will be sold
   void setQuantity(String itemId, int qty) {
-    if (qty < 0) qty = 0;
-    saleQuantities[itemId] = qty;
+    if (qty <= 0) {
+      saleQuantities.remove(itemId); // remove completely
+    } else {
+      saleQuantities[itemId] = qty;
+    }
     notifyListeners();
   }
 
@@ -57,10 +63,6 @@ class SellController extends ChangeNotifier {
       }
       final item = itemController.items[index];
 
-      if (item == null) {
-        return "Item $itemId not found";
-      }
-      
       if (qty > item.quantity) {
         return "Cannot sell $qty of ${item.name}, only ${item.quantity} in stock.";
       }
@@ -69,7 +71,7 @@ class SellController extends ChangeNotifier {
   }
 
   /// Execute the sale: subtract from item stocks, return a SaleTransaction
-  /// Throws if invalid
+  /// Also stores the sale into history
   Sell commitSale() {
     final error = validate();
     if (error != null) {
@@ -94,8 +96,53 @@ class SellController extends ChangeNotifier {
       totalAmount: totalAmount,
     );
 
+    // Save to history
+    salesHistory.add(sale);
+
     // After commit, reset saleQuantities
     reset();
+    notifyListeners();
     return sale;
   }
+
+  /// Sort sales by time (newest first)
+  List<Sell> sortSales(List<Sell> sales) {
+    List<Sell> sorted = List.from(sales);
+    sorted.sort((a, b) => b.date.compareTo(a.date));
+    return sorted;
+  }
+
+  /// Filter sales by selected date
+  List<Sell> filterSalesByDate(List<Sell> sales, DateTime? selectedDate) {
+    if (selectedDate == null) return sales;
+
+    return sales.where((sale) {
+      final dt = sale.date;
+      return dt.year == selectedDate.year &&
+          dt.month == selectedDate.month &&
+          dt.day == selectedDate.day;
+    }).toList();
+  }
+
+  /// Simple date formatter (no intl needed)
+  String formatDate(DateTime dt) {
+    return "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} "
+        "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+  }
+
+  /// Calculate Profit on dashboard
+  double getTodayProfit() {
+    final now = DateTime.now();
+    final todaySales = salesHistory.where((sale) =>
+        sale.date.year == now.year &&
+        sale.date.month == now.month &&
+        sale.date.day == now.day);
+
+    double total = 0.0;
+    for (final sale in todaySales) {
+      total += sale.totalAmount;
+    }
+    return total;
+  }
+
 }

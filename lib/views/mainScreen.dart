@@ -1,4 +1,5 @@
 import 'package:easyinventory/controllers/item.controller.dart';
+import 'package:easyinventory/controllers/sell.controller.dart';
 import 'package:easyinventory/views/dashboard.dart';
 import 'package:easyinventory/views/items/items.dart';
 import 'package:easyinventory/views/sell/sell.dart';
@@ -17,6 +18,7 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   late final ItemController itemController;
+  late final SellController sellController;
 
   late final List<Widget> _pages;
 
@@ -25,11 +27,12 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
 
     itemController = ItemController();
+    sellController = SellController(itemController: itemController);
 
     _pages = [
-      const DashboardPage(),
-      ItemsPage(),
-      SellPage(itemController: itemController,),
+      DashboardPage(sellController: sellController),
+      ItemsPage(itemController: itemController, sellController: sellController),
+      SellPage(itemController: itemController, sellController: sellController,),
       const SettingsPage(),
     ];
   }

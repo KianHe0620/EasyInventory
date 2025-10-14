@@ -1,41 +1,33 @@
 import 'package:flutter/material.dart';
+import '../models/supplier.model.dart';
 
 class SupplierController extends ChangeNotifier {
-  /// Search controller for the search bar
   final TextEditingController searchController = TextEditingController();
 
-  /// Full list of suppliers
-  final List<String> _suppliers = [
-    "Apple Supplier",
-    "Banana Supplier",
-    "Cat Food Supplier",
-    "Dog Toy Supplier",
-    "Orange Supplier"
+  final List<Supplier> _suppliers = [
+    Supplier(id: "1", name: "Apple Supplier"),
+    Supplier(id: "2", name: "Banana Supplier"),
+    Supplier(id: "3", name: "Cat Food Supplier"),
+    Supplier(id: "4", name: "Dog Toy Supplier"),
+    Supplier(id: "5", name: "Orange Supplier"),
   ];
 
-  /// Filtered list of suppliers (for search)
-  List<String> filteredSuppliers = [];
+  List<Supplier> filteredSuppliers = [];
 
-  /// Selection mode state
   bool isSelectionMode = false;
-
-  /// Selected suppliers
   final Set<String> selectedSuppliers = {};
 
   SupplierController() {
     filteredSuppliers = List.from(_suppliers);
   }
 
-  // -----------------------------
-  // 🔍 SEARCHING
-  // -----------------------------
-
+  // 🔍 SEARCH
   void filterSuppliers(String query) {
     if (query.isEmpty) {
       filteredSuppliers = List.from(_suppliers);
     } else {
       filteredSuppliers = _suppliers
-          .where((s) => s.toLowerCase().contains(query.toLowerCase()))
+          .where((s) => s.name.toLowerCase().contains(query.toLowerCase()))
           .toList();
     }
     notifyListeners();
@@ -47,50 +39,55 @@ class SupplierController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // -----------------------------
-  // ✅ SELECTION MODE
-  // -----------------------------
-
+  // ✅ SELECTION
   void toggleSelectionMode() {
     isSelectionMode = !isSelectionMode;
-    if (!isSelectionMode) {
-      selectedSuppliers.clear();
-    }
+    if (!isSelectionMode) selectedSuppliers.clear();
     notifyListeners();
   }
 
-  void toggleSelection(String supplier) {
-    if (selectedSuppliers.contains(supplier)) {
-      selectedSuppliers.remove(supplier);
+  void toggleSelection(String supplierId) {
+    if (selectedSuppliers.contains(supplierId)) {
+      selectedSuppliers.remove(supplierId);
     } else {
-      selectedSuppliers.add(supplier);
+      selectedSuppliers.add(supplierId);
     }
     notifyListeners();
   }
 
-  bool isSelected(String supplier) {
-    return selectedSuppliers.contains(supplier);
-  }
+  bool isSelected(String supplierId) => selectedSuppliers.contains(supplierId);
 
-  // -----------------------------
-  // 🗑️ SUPPLIER MANAGEMENT
-  // -----------------------------
-
+  // 🗑️ REMOVE
   void removeSuppliers() {
-    _suppliers.removeWhere((s) => selectedSuppliers.contains(s));
-    filteredSuppliers.removeWhere((s) => selectedSuppliers.contains(s));
+    _suppliers.removeWhere((s) => selectedSuppliers.contains(s.id));
+    filteredSuppliers.removeWhere((s) => selectedSuppliers.contains(s.id));
     selectedSuppliers.clear();
     isSelectionMode = false;
     notifyListeners();
   }
 
-  // -----------------------------
-  // 📦 SUPPLIER ITEMS (example)
-  // -----------------------------
+  // ➕ ADD
+  void addSupplier(Supplier supplier) {
+    _suppliers.add(supplier);
+    filterSuppliers(searchController.text);
+    notifyListeners();
+  }
 
-  final List<Map<String, String>> items = [
-    {"name": "Cat Food", "imagePath": ""},
-    {"name": "Cat Toy", "imagePath": ""},
-    {"name": "Cat Bed", "imagePath": ""},
-  ];
+  // ✏️ UPDATE
+  void updateSupplier(String id, Supplier updated) {
+    final index = _suppliers.indexWhere((s) => s.id == id);
+    if (index != -1) {
+      _suppliers[index] = updated;
+      filterSuppliers(searchController.text);
+      notifyListeners();
+    }
+  }
+
+  Supplier? getSupplierById(String id) {
+    try {
+      return _suppliers.firstWhere((s) => s.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
 }

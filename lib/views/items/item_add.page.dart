@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../controllers/item.controller.dart';
 import '../../controllers/supplier.controller.dart';
 import '../../models/item.model.dart';
+import '../../models/supplier.model.dart';
 import '../widgets/quantity_box.global.dart';
 
 class ItemAddPage extends StatefulWidget {
@@ -30,7 +31,7 @@ class _ItemAddPageState extends State<ItemAddPage> {
 
   int quantity = 0;
   int minQuantity = 0;
-  String? supplier;
+  String? supplierId; // ✅ store supplierId instead of object
   String field = "Food";
 
   @override
@@ -41,9 +42,9 @@ class _ItemAddPageState extends State<ItemAddPage> {
     sellingCtrl = TextEditingController(text: "0.00");
     barcodeCtrl = TextEditingController();
 
-    // default supplier = first one
-    supplier = widget.supplierController.filteredSuppliers.isNotEmpty
-        ? widget.supplierController.filteredSuppliers.first
+    // ✅ default supplier = first one’s id
+    supplierId = widget.supplierController.filteredSuppliers.isNotEmpty
+        ? widget.supplierController.filteredSuppliers.first.id
         : null;
   }
 
@@ -65,6 +66,9 @@ class _ItemAddPageState extends State<ItemAddPage> {
             icon: const Icon(Icons.check, color: Colors.black),
             onPressed: () {
               if (_formKey.currentState!.validate()) {
+                final selectedSupplier =
+                    widget.supplierController.getSupplierById(supplierId ?? "");
+
                 final newItem = Item(
                   id: DateTime.now().toString(), // unique ID
                   name: nameCtrl.text,
@@ -73,13 +77,12 @@ class _ItemAddPageState extends State<ItemAddPage> {
                   purchasePrice: double.tryParse(purchaseCtrl.text) ?? 0,
                   sellingPrice: double.tryParse(sellingCtrl.text) ?? 0,
                   barcode: barcodeCtrl.text,
-                  supplier: supplier ?? "",
+                  supplier: selectedSupplier?.name ?? "", // ✅ save supplier name
                   field: field,
                 );
 
                 controller.addItem(newItem);
-
-                Navigator.pop(context, newItem); // ✅ return new item
+                Navigator.pop(context, newItem);
               }
             },
           )
@@ -89,11 +92,11 @@ class _ItemAddPageState extends State<ItemAddPage> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Form(
-            key: _formKey, // ✅ validation form
+            key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 📷 Image section
+                // 📷 Image placeholder
                 Container(
                   height: 150,
                   width: double.infinity,
@@ -138,7 +141,8 @@ class _ItemAddPageState extends State<ItemAddPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: priceField("Purchase Price", "RM", purchaseCtrl, setState),
+                      child:
+                          priceField("Purchase Price", "RM", purchaseCtrl, setState),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -156,7 +160,8 @@ class _ItemAddPageState extends State<ItemAddPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: priceField("Selling Price", "RM", sellingCtrl, setState),
+                      child:
+                          priceField("Selling Price", "RM", sellingCtrl, setState),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -180,7 +185,7 @@ class _ItemAddPageState extends State<ItemAddPage> {
                       onPressed: () {
                         // TODO: implement barcode scanning logic here
                       },
-                    )
+                    ),
                   ),
                   keyboardType: TextInputType.number,
                   inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -189,14 +194,17 @@ class _ItemAddPageState extends State<ItemAddPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Supplier dropdown
+                // Supplier dropdown ✅ FIXED
                 sectionLabel("Supplier"),
                 DropdownButtonFormField<String>(
-                  value: supplier,
+                  value: supplierId,
                   items: widget.supplierController.filteredSuppliers
-                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                      .map((s) => DropdownMenuItem(
+                            value: s.id, // store ID
+                            child: Text(s.name),
+                          ))
                       .toList(),
-                  onChanged: (val) => setState(() => supplier = val),
+                  onChanged: (val) => setState(() => supplierId = val),
                   decoration: inputDecoration(),
                   validator: (val) => val == null || val.isEmpty
                       ? "Please select supplier"
@@ -215,15 +223,14 @@ class _ItemAddPageState extends State<ItemAddPage> {
                   ],
                   onChanged: (val) => setState(() => field = val ?? "Food"),
                   decoration: inputDecoration(),
-                  validator: (val) => val == null || val.isEmpty
-                      ? "Please select field"
-                      : null,
+                  validator: (val) =>
+                      val == null || val.isEmpty ? "Please select field" : null,
                 ),
               ],
             ),
           ),
         ),
-      )
+      ),
     );
   }
 }

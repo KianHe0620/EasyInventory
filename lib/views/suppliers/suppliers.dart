@@ -1,10 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:easyinventory/controllers/supplier.controller.dart';
 import 'package:easyinventory/views/suppliers/addSupplier.dart';
 import 'package:easyinventory/views/suppliers/editSupplier.dart';
 import 'package:easyinventory/views/widgets/app_bar.global.dart';
 import 'package:easyinventory/views/widgets/floating_add_btn.global.dart';
 import 'package:easyinventory/views/widgets/search.global.dart';
-import 'package:flutter/material.dart';
 
 class SuppliersPage extends StatefulWidget {
   const SuppliersPage({super.key});
@@ -21,17 +21,18 @@ class _SuppliersPageState extends State<SuppliersPage> {
     return Scaffold(
       appBar: GlobalAppBar(
         title: _controller.isSelectionMode
-        ? "${_controller.selectedSuppliers.length} selected" 
-        : "Suppliers",
-        rightIconBtn: _controller.isSelectionMode ? Icons.delete : Icons.checklist,
+            ? "${_controller.selectedSuppliers.length} selected"
+            : "Suppliers",
+        rightIconBtn:
+            _controller.isSelectionMode ? Icons.delete : Icons.checklist,
         onRightButtonPressed: () async {
           if (_controller.isSelectionMode) {
-            // confirm before deleting
             final confirm = await showDialog<bool>(
               context: context,
               builder: (ctx) => AlertDialog(
                 title: const Text("Delete Suppliers"),
-                content: const Text("Are you sure you want to delete selected suppliers?"),
+                content: const Text(
+                    "Are you sure you want to delete selected suppliers?"),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pop(ctx, false),
@@ -46,9 +47,7 @@ class _SuppliersPageState extends State<SuppliersPage> {
             );
 
             if (confirm == true) {
-              setState(() {
-                _controller.removeSuppliers();
-              });
+              setState(() => _controller.removeSuppliers());
             }
           } else {
             setState(() => _controller.toggleSelectionMode());
@@ -59,76 +58,63 @@ class _SuppliersPageState extends State<SuppliersPage> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => AddSupplierPage()),
-          );
+            MaterialPageRoute(
+              builder: (_) => AddSupplierPage(controller: _controller),
+            ),
+          ).then((_) => setState(() {}));
         },
       ),
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 16),
-
-          // Search Bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: SearchBarGlobal(
               controller: _controller.searchController,
-              onChanged: (value) {
-                setState(() => _controller.filterSuppliers(value));
-              },
-              onClear: () {
-                setState(() => _controller.clearSearch());
-              },
+              onChanged: (value) => setState(() {
+                _controller.filterSuppliers(value);
+              }),
+              onClear: () => setState(() {
+                _controller.clearSearch();
+              }),
             ),
           ),
-
           const SizedBox(height: 16),
           const Divider(height: 0, thickness: 0.8, color: Colors.grey),
-
-          // Supplier List
           Expanded(
             child: ListView.builder(
-              padding: EdgeInsets.zero,
               itemCount: _controller.filteredSuppliers.length,
               itemBuilder: (context, index) {
                 final supplier = _controller.filteredSuppliers[index];
-                final isSelected = _controller.isSelected(supplier);
+                final isSelected = _controller.isSelected(supplier.id);
 
-                return Container(
-                  width: double.infinity,
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: Colors.grey, width: 0.8),
-                    ),
-                  ),
-                  child: ListTile(
-                    dense: true,
-                    title: Text(supplier),
-                    trailing: _controller.isSelectionMode
-                        ? Checkbox(
-                            value: isSelected,
-                            onChanged: (_) {
-                              setState(() {
-                                _controller.toggleSelection(supplier);
-                              });
-                            },
-                          )
-                        : null,
-                    onTap: () {
-                      if (_controller.isSelectionMode) {
-                        setState(() {
-                          _controller.toggleSelection(supplier);
-                        });
-                      } else {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => EditSupplierPage(supplier: supplier),
+                return ListTile(
+                  title: Text(supplier.name),
+                  trailing: _controller.isSelectionMode
+                      ? Checkbox(
+                          value: isSelected,
+                          onChanged: (_) => setState(() {
+                            _controller.toggleSelection(supplier.id);
+                          }),
+                        )
+                      : null,
+                  onTap: () {
+                    if (_controller.isSelectionMode) {
+                      setState(() {
+                        _controller.toggleSelection(supplier.id);
+                      });
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => EditSupplierPage(
+                            controller: _controller,
+                            supplier: supplier,
                           ),
-                        );
-                      }
-                    },
-                  ),
+                        ),
+                      ).then((_) => setState(() {}));
+                    }
+                  },
                 );
               },
             ),

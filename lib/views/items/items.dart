@@ -102,7 +102,7 @@ class _ItemsPageState extends State<ItemsPage> {
                   hintText: 'Name or Barcode...',
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: IconButton(
-                    icon: const Icon(Icons.qr_code_scanner),
+                    icon: const Icon(Icons.barcode_reader),
                     onPressed: () {
                       // TODO: integrate barcode scanner
                     },

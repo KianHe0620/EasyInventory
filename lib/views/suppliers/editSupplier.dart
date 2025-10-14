@@ -1,12 +1,18 @@
+import 'package:flutter/material.dart';
 import 'package:easyinventory/views/widgets/app_bar.global.dart';
 import 'package:easyinventory/views/widgets/text_form.global.dart';
-import 'package:flutter/material.dart';
 import 'package:easyinventory/controllers/supplier.controller.dart';
+import 'package:easyinventory/models/supplier.model.dart';
 
 class EditSupplierPage extends StatefulWidget {
-  const EditSupplierPage({super.key, required this.supplier});
+  final SupplierController controller;
+  final Supplier supplier;
 
-  final String supplier;
+  const EditSupplierPage({
+    super.key,
+    required this.controller,
+    required this.supplier,
+  });
 
   @override
   State<EditSupplierPage> createState() => _EditSupplierPageState();
@@ -19,27 +25,38 @@ class _EditSupplierPageState extends State<EditSupplierPage> {
   late TextEditingController addressController;
 
   final _formKey = GlobalKey<FormState>();
-  final SupplierController _controller = SupplierController();
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-
-    supplierNameController = TextEditingController(text: widget.supplier);
-    phoneNumberController = TextEditingController();
-    emailAddressController = TextEditingController();
-    addressController = TextEditingController();
+    supplierNameController = TextEditingController(text: widget.supplier.name);
+    phoneNumberController = TextEditingController(text: widget.supplier.phone);
+    emailAddressController = TextEditingController(text: widget.supplier.email);
+    addressController = TextEditingController(text: widget.supplier.address);
   }
 
   @override
   void dispose() {
-    // TODO: implement dispose
     supplierNameController.dispose();
     phoneNumberController.dispose();
     emailAddressController.dispose();
     addressController.dispose();
     super.dispose();
+  }
+
+  void _saveSupplier() {
+    if (_formKey.currentState!.validate()) {
+      final updated = widget.supplier.copyWith(
+        name: supplierNameController.text.trim(),
+        phone: phoneNumberController.text.trim(),
+        email: emailAddressController.text.trim(),
+        address: addressController.text.trim(),
+      );
+
+      widget.controller.updateSupplier(widget.supplier.id, updated);
+
+      Navigator.pop(context, updated); // ✅ return updated supplier
+    }
   }
 
   @override
@@ -48,14 +65,10 @@ class _EditSupplierPageState extends State<EditSupplierPage> {
       appBar: GlobalAppBar(
         title: "Edit Supplier",
         rightIconBtn: Icons.check,
-        onRightButtonPressed: () {
-          if (_formKey.currentState!.validate()) {
-            print("Supplier: ${supplierNameController.text}");
-          }
-        },
+        onRightButtonPressed: _saveSupplier,
       ),
       body: SafeArea(
-        child: SingleChildScrollView( // 👈 whole page scrollable
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(15),
           child: Form(
             key: _formKey,
@@ -64,9 +77,8 @@ class _EditSupplierPageState extends State<EditSupplierPage> {
               children: [
                 const SizedBox(height: 16),
 
-                // Supplier Name
-                Text("Supplier's Name", style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 5),
+                const Text("Supplier's Name", style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 5),
                 TextForm(
                   controller: supplierNameController,
                   text: "Supplier's Name",
@@ -74,59 +86,32 @@ class _EditSupplierPageState extends State<EditSupplierPage> {
                   mustFill: true,
                   errorMessage: "Supplier's name is required",
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-                // Phone
-                Text("Phone", style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 5),
+                const Text("Phone", style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 5),
                 TextForm(
                   controller: phoneNumberController,
                   text: "Phone Number",
                   textInputType: TextInputType.phone,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-                // Email
-                Text("Email", style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 5),
+                const Text("Email", style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 5),
                 TextForm(
                   controller: emailAddressController,
                   text: "Email Address",
                   textInputType: TextInputType.emailAddress,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-                // Address
-                Text("Address", style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 5),
+                const Text("Address", style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 5),
                 TextForm(
                   controller: addressController,
                   text: "Address",
                   textInputType: TextInputType.text,
-                ),
-                SizedBox(height: 16),
-
-                // Items section
-                Text("Items:", style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 8),
-                Divider(),
-
-                // Instead of ListView, just loop with Column
-                Column(
-                  children: List.generate(_controller.items.length, (index) {
-                    final item = _controller.items[index];
-                    return ListTile(
-                      leading: item["imagePath"] != null
-                          ? Image.asset(
-                              item["imagePath"]!,
-                              width: 40,
-                              height: 40,
-                              errorBuilder: (_, __, ___) => Icon(Icons.image_not_supported),
-                            )
-                          : Icon(Icons.image),
-                      title: Text(item["name"] ?? "Unnamed"),
-                    );
-                  }),
                 ),
               ],
             ),
@@ -135,5 +120,4 @@ class _EditSupplierPageState extends State<EditSupplierPage> {
       ),
     );
   }
-
 }

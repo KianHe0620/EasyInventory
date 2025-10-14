@@ -38,19 +38,23 @@ class _ItemEditPageState extends State<ItemEditPage> {
   void initState() {
     super.initState();
     final item = widget.item;
+
     nameCtrl = TextEditingController(text: item?.name ?? "");
     purchaseCtrl = TextEditingController(
-        text: item?.purchasePrice != null ? item!.purchasePrice.toString() : "");
+        text: item != null ? item.purchasePrice.toString() : "");
     sellingCtrl = TextEditingController(
-        text: item?.sellingPrice != null ? item!.sellingPrice.toString() : "");
+        text: item != null ? item.sellingPrice.toString() : "");
     barcodeCtrl = TextEditingController(text: item?.barcode ?? "");
     quantity = item?.quantity ?? 0;
     minQuantity = item?.minQuantity ?? 0;
 
-    supplier = item?.supplier.isNotEmpty == true
-        ? item!.supplier
-        : widget.supplierController.filteredSuppliers.first;
-    field = item?.field.isNotEmpty == true ? item!.field : "Food";
+    supplier = (item != null && item.supplier.isNotEmpty)
+        ? item.supplier
+        : widget.supplierController.filteredSuppliers.first.name;
+
+    field = (item != null && item.field.isNotEmpty)
+        ? item.field
+        : "Food";
   }
 
   @override
@@ -201,11 +205,15 @@ class _ItemEditPageState extends State<ItemEditPage> {
               DropdownButtonFormField<String>(
                 value: supplier,
                 items: widget.supplierController.filteredSuppliers
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                    .map((s) => DropdownMenuItem(
+                          value: s.name, // ✅ use supplier.name
+                          child: Text(s.name),
+                        ))
                     .toList(),
-                onChanged: (val) => setState(() => supplier = val),
+                onChanged: (val) => setState(() => supplier = val ?? ""),
                 decoration: inputDecoration(),
               ),
+
               const SizedBox(height: 16),
 
               // Field dropdown

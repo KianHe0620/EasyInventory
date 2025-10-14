@@ -1,12 +1,21 @@
+import 'package:easyinventory/views/reports/report.view.dart';
 import 'package:easyinventory/views/suppliers/suppliers.dart';
 import 'package:easyinventory/views/utils/global.colors.dart';
 import 'package:flutter/material.dart';
+
 import '../../controllers/sell.controller.dart';
+import '../../controllers/item.controller.dart';
+import '../../controllers/report.controller.dart';
 
 class DashboardPage extends StatelessWidget {
   final SellController sellController;
+  final ItemController itemController;
 
-  const DashboardPage({super.key, required this.sellController});
+  const DashboardPage({
+    super.key,
+    required this.sellController,
+    required this.itemController,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,12 +30,14 @@ class DashboardPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                //Title
-                const Text('Dashboard',
-                    style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold)),
+                // Title
+                const Text(
+                  'Dashboard',
+                  style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 30),
 
-                //Profit Card
+                // Profit Card
                 SizedBox(
                   width: double.infinity,
                   child: Card(
@@ -51,10 +62,10 @@ class DashboardPage extends StatelessWidget {
                   ),
                 ),
 
-                //Row of buttons
+                // Row of buttons
                 Row(
                   children: [
-                    //Suppliers Button
+                    // Suppliers Button
                     Expanded(
                       child: Card(
                         color: GlobalColors.textFieldColor,
@@ -84,7 +95,7 @@ class DashboardPage extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
 
-                    //Report Button
+                    // Report Button
                     Expanded(
                       child: Card(
                         color: GlobalColors.textFieldColor,
@@ -93,7 +104,18 @@ class DashboardPage extends StatelessWidget {
                         ),
                         child: InkWell(
                           onTap: () {
-                            // TODO: Navigate to Report page
+                            final reportController = ReportController(
+                              itemController: itemController,
+                              sellController: sellController,
+                            );
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ReportPage(
+                                  reportController: reportController,
+                                ),
+                              ),
+                            );
                           },
                           child: const Padding(
                             padding: EdgeInsets.symmetric(vertical: 20),

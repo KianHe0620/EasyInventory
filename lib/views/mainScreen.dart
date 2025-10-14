@@ -30,7 +30,7 @@ class _MainScreenState extends State<MainScreen> {
     sellController = SellController(itemController: itemController);
 
     _pages = [
-      DashboardPage(sellController: sellController),
+      DashboardPage(itemController: itemController, sellController: sellController),
       ItemsPage(itemController: itemController, sellController: sellController),
       SellPage(itemController: itemController, sellController: sellController,),
       const SettingsPage(),

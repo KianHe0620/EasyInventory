@@ -38,7 +38,7 @@ class _SellPageState extends State<SellPage> {
         title: const Text('Sell Items'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.qr_code_scanner),
+            icon: const Icon(Icons.barcode_reader),
             onPressed: () {
               // TODO: integrate barcode scanner
             },

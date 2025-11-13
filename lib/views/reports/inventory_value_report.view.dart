@@ -20,22 +20,22 @@ class InventoryValueReportPage extends StatelessWidget {
               Text("Total Quantity: ${report.totalQuantity}"),
               Text("Total Value (RM): ${report.totalValue.toStringAsFixed(2)}"),
               const SizedBox(height: 16),
-              const Text("AI Overstock Items Insight",
+              const Text("Item Summary",
                   style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Expanded(
                 child: ListView.builder(
-                  itemCount: report.overstockItems.length,
+                  itemCount: report.itemSummaries.length,
                   itemBuilder: (ctx, i) {
-                    final item = report.overstockItems[i];
+                    final item = report.itemSummaries[i];
                     return Card(
                       margin: const EdgeInsets.symmetric(vertical: 6),
                       child: ListTile(
                         title: Text(item["name"].toString()),
                         subtitle: Text(
                           "Stock: ${item["qty"]}\n"
-                          "Avg Outflow: ${item["avgOutflow"]}/day\n"
-                          "Suggestion: ${item["suggestion"]}",
+                          "Price: RM ${item["price"].toStringAsFixed(2)}\n"
+                          "Value: RM ${item["value"].toStringAsFixed(2)}",
                         ),
                       ),
                     );
@@ -49,3 +49,4 @@ class InventoryValueReportPage extends StatelessWidget {
     );
   }
 }
+

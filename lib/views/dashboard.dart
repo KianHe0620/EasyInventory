@@ -1,3 +1,4 @@
+import 'package:easyinventory/controllers/smart_report.controller.dart';
 import 'package:easyinventory/views/reports/report.view.dart';
 import 'package:easyinventory/views/suppliers/suppliers.dart';
 import 'package:easyinventory/views/utils/global.colors.dart';
@@ -108,11 +109,18 @@ class DashboardPage extends StatelessWidget {
                               itemController: itemController,
                               sellController: sellController,
                             );
+
+                            final smartReportController = SmartReportController(
+                              itemController: itemController,
+                              sellController: sellController,
+                            );
+
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => ReportPage(
                                   reportController: reportController,
+                                  smartReportController: smartReportController, // ✅ pass it
                                 ),
                               ),
                             );

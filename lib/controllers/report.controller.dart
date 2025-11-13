@@ -25,7 +25,7 @@ class ReportController extends ChangeNotifier {
             "qty": it.quantity,
             "avgOutflow": avgOutflow,
             "estDays": estDays,
-            "suggestion": "Restock ${(it.minQuantity * 3) - it.quantity} units for 30 days coverage",
+            "suggestion": "Restock ${(avgOutflow * 30) - it.quantity} units for 30 days coverage",
           };
         }).toList();
 
@@ -72,21 +72,18 @@ class ReportController extends ChangeNotifier {
     int totalQty = items.fold(0, (a, b) => a + b.quantity);
     double totalVal = items.fold(0, (a, b) => a + (b.quantity * b.sellingPrice));
 
-    final overstock = items
-        .where((it) => it.quantity > it.minQuantity + 100) // arbitrary overstock threshold
-        .map((it) => {
-              "name": it.name,
-              "qty": it.quantity,
-              "avgOutflow": 0, // TODO: use sales history to calculate
-              "suggestion": "Consider bundling or removing",
-            })
-        .toList();
+    final itemSummaries = items.map((it) => {
+          "name": it.name,
+          "qty": it.quantity,
+          "price": it.sellingPrice,
+          "value": it.quantity * it.sellingPrice,
+        }).toList();
 
     return InventoryValueReport(
       totalItem: totalItem,
       totalQuantity: totalQty,
       totalValue: totalVal,
-      overstockItems: overstock,
+      itemSummaries: itemSummaries, // ✅ changed field name
     );
   }
 }

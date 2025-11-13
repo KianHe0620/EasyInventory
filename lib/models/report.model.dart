@@ -39,12 +39,13 @@ class InventoryValueReport {
   final int totalItem;
   final int totalQuantity;
   final double totalValue;
-  final List<Map<String, dynamic>> overstockItems;
+  final List<Map<String, dynamic>> itemSummaries;
 
   InventoryValueReport({
     required this.totalItem,
     required this.totalQuantity,
     required this.totalValue,
-    required this.overstockItems,
+    required this.itemSummaries,
   });
 }
+

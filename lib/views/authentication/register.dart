@@ -1,13 +1,63 @@
+import 'package:easyinventory/controllers/authentication.controller.dart';
 import 'package:easyinventory/views/authentication/Login.dart';
+import 'package:flutter/material.dart';
 import 'package:easyinventory/views/utils/global.colors.dart';
 import 'package:easyinventory/views/widgets/button.global.dart';
 import 'package:easyinventory/views/widgets/text_form.global.dart';
-import 'package:flutter/material.dart';
 
-class RegisterScreen extends StatelessWidget {
-  RegisterScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmController = TextEditingController();
+
+  final AuthController authController = AuthController();
+
+  bool loading = false;
+
+  void registerUser() async {
+    final email = emailController.text.trim();
+    final pass = passwordController.text.trim();
+    final confirm = confirmController.text.trim();
+
+    if (email.isEmpty || pass.isEmpty || confirm.isEmpty) {
+      _showMessage("All fields are required");
+      return;
+    }
+
+    if (pass != confirm) {
+      _showMessage("Passwords do not match");
+      return;
+    }
+
+    setState(() => loading = true);
+
+    final error = await authController.register(email, pass);
+
+    setState(() => loading = false);
+
+    if (error == null) {
+      // success
+      _showMessage("Registration successful!");
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => LoginScreen()),
+      );
+    } else {
+      _showMessage(error);
+    }
+  }
+
+  void _showMessage(String msg) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,115 +66,80 @@ class RegisterScreen extends StatelessWidget {
         child: SingleChildScrollView(
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(15.0),
+            padding: const EdgeInsets.all(15),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                //Title
-                Text('Register',
-                style: TextStyle(fontSize: 35,fontWeight: FontWeight.bold)),
-                SizedBox(height: 30),
+                const Text('Register',
+                    style: TextStyle(
+                        fontSize: 35, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 30),
 
-                Column(
-                  children: [
-                    //Email Input
-                    TextForm(
-                      controller: emailController,
-                      text: 'Email Address',
-                      textInputType: TextInputType.emailAddress,
-                      obscure: false,
-                    ),
-                    const SizedBox(height: 15),
+                // Email
+                TextForm(
+                  controller: emailController,
+                  text: 'Email Address',
+                  textInputType: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 15),
 
-                    //Password Input
-                    TextForm(
-                      controller: passwordController,
-                      text: 'Password',
-                      textInputType: TextInputType.text,
-                      obscure: true,
-                    ),
-                    const SizedBox(height: 15),
+                // Password
+                TextForm(
+                  controller: passwordController,
+                  text: 'Password',
+                  obscure: true, 
+                  textInputType: TextInputType.visiblePassword,
+                ),
+                const SizedBox(height: 15),
 
-                    TextForm(
-                      controller: passwordController,
-                      text: 'Confirm Password',
-                      textInputType: TextInputType.text,
-                      obscure: true,
-                    ),
-                  ],
+                // Confirm
+                TextForm(
+                  controller: confirmController,
+                  text: 'Confirm Password',
+                  obscure: true, 
+                  textInputType: TextInputType.visiblePassword,
                 ),
                 const SizedBox(height: 30),
 
-                //Login Button
-                ButtonGlobal(
-                  boxColor: GlobalColors.mainColor, 
-                  text: 'Register', 
-                  textColor: Colors.white, 
-                  width: 0,
-                  onTap: () {
-
-                  },),
-
-                //Divider Line
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Row(
-                    children: [
-                      Expanded(child: Divider(color: Colors.grey,thickness: 0.8,)),
-                      const Padding(
-                        padding: EdgeInsetsGeometry.symmetric(horizontal: 8.0),
-                        child: Text(
-                          'Or',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 16,
-                          ),
-                        ),
+                loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ButtonGlobal(
+                        boxColor: GlobalColors.mainColor,
+                        text: 'Register',
+                        textColor: Colors.white,
+                        width: 0,
+                        onTap: registerUser,
                       ),
-                      Expanded(child: Divider(color: Colors.grey,thickness: 0.8,))
-                    ],
-                  ),
-                ),
 
-                //Google Login Button
-                ButtonGlobal(
-                  boxColor: Colors.white, 
-                  text: 'Login with Google', 
-                  textColor: Colors.black, 
-                  width: 1,
-                  onTap: () {
-                    
-                  },),
-                SizedBox(height: 30,),
+                const SizedBox(height: 20),
 
-                //Register Text Button
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children:[
-                    Text('Already own an account?'),
-                    TextButton(onPressed: (){
-                      Navigator.push(
-                        context, 
-                        MaterialPageRoute(
-                          builder: (context)=> LoginScreen()
-                        )
-                      );
-                    }, 
-                    child: Text(
-                      'Login',
-                      style: TextStyle(
-                        color: GlobalColors.mainColor,
-                        fontSize: 18,
-                        )
-                      )
+                  children: [
+                    const Text('Already have an account?'),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => LoginScreen()),
+                        );
+                      },
+                      child: Text(
+                        'Login',
+                        style: TextStyle(
+                          color: GlobalColors.mainColor,
+                          fontSize: 18,
+                        ),
+                      ),
                     ),
-                  ]
+                  ],
                 )
               ],
             ),
-          )
-        )
-      )
+          ),
+        ),
+      ),
     );
   }
 }

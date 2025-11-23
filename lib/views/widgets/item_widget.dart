@@ -31,7 +31,8 @@ Widget priceField(
             keyboardType: TextInputType.number,
             decoration: inputDecoration().copyWith(prefixText: "$prefix "),
             inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?d{0,2}')),
+              // allow digits, optional dot, up to 2 decimals
+              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$')),
             ],
             onChanged: (_) => setState(() {}),
           ),

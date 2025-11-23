@@ -1,3 +1,4 @@
+// lib/views/suppliers/suppliers.dart
 import 'package:flutter/material.dart';
 import 'package:easyinventory/controllers/supplier.controller.dart';
 import 'package:easyinventory/views/suppliers/addSupplier.dart';
@@ -15,6 +16,25 @@ class SuppliersPage extends StatefulWidget {
 
 class _SuppliersPageState extends State<SuppliersPage> {
   final SupplierController _controller = SupplierController();
+
+  @override
+  void initState() {
+    super.initState();
+    // listen to controller so page updates when controller changes (add/remove/update)
+    _controller.addListener(_onControllerChanged);
+  }
+
+  void _onControllerChanged() {
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onControllerChanged);
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,10 +67,13 @@ class _SuppliersPageState extends State<SuppliersPage> {
             );
 
             if (confirm == true) {
-              setState(() => _controller.removeSuppliers());
+              // use controller's removeSelectedSuppliers which handles notify
+              _controller.removeSelectedSuppliers();
+              // UI will update via listener
             }
           } else {
-            setState(() => _controller.toggleSelectionMode());
+            _controller.toggleSelectionMode();
+            // UI updated via listener
           }
         },
       ),
@@ -61,7 +84,8 @@ class _SuppliersPageState extends State<SuppliersPage> {
             MaterialPageRoute(
               builder: (_) => AddSupplierPage(controller: _controller),
             ),
-          ).then((_) => setState(() {}));
+          );
+          // no need for .then -> controller notifies and listener will rebuild
         },
       ),
       body: Column(
@@ -71,16 +95,49 @@ class _SuppliersPageState extends State<SuppliersPage> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: SearchBarGlobal(
               controller: _controller.searchController,
-              onChanged: (value) => setState(() {
-                _controller.filterSuppliers(value);
-              }),
-              onClear: () => setState(() {
-                _controller.clearSearch();
-              }),
+              onChanged: (value) => _controller.filterSuppliers(value),
+              onClear: () => _controller.clearSearch(),
             ),
           ),
           const SizedBox(height: 16),
           const Divider(height: 0, thickness: 0.8, color: Colors.grey),
+
+          // ----------------------------
+          // cancel bar shown when selection mode is active
+          // ----------------------------
+          if (_controller.isSelectionMode)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.close),
+                      label: const Text('Cancel selection'),
+                      onPressed: () {
+                        _controller.toggleSelectionMode();
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.select_all),
+                      label: const Text('Select all'),
+                      onPressed: () {
+                        // quick "select all" helper:
+                        for (final s in _controller.filteredSuppliers) {
+                          _controller.selectedSuppliers.add(s.id);
+                        }
+                        _controller.notifyListeners();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // the supplier list
           Expanded(
             child: ListView.builder(
               itemCount: _controller.filteredSuppliers.length,
@@ -93,26 +150,22 @@ class _SuppliersPageState extends State<SuppliersPage> {
                   trailing: _controller.isSelectionMode
                       ? Checkbox(
                           value: isSelected,
-                          onChanged: (_) => setState(() {
+                          onChanged: (_) {
                             _controller.toggleSelection(supplier.id);
-                          }),
+                          },
                         )
                       : null,
                   onTap: () {
                     if (_controller.isSelectionMode) {
-                      setState(() {
-                        _controller.toggleSelection(supplier.id);
-                      });
+                      _controller.toggleSelection(supplier.id);
                     } else {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => EditSupplierPage(
-                            controller: _controller,
-                            supplier: supplier,
-                          ),
+                          builder: (_) =>
+                              EditSupplierPage(controller: _controller, supplier: supplier),
                         ),
-                      ).then((_) => setState(() {}));
+                      );
                     }
                   },
                 );

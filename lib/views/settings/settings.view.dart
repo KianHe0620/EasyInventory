@@ -1,16 +1,19 @@
 // lib/views/settings/settings.page.dart
+import 'package:easyinventory/views/settings/manage_field.view.dart';
 import 'package:flutter/material.dart';
 import 'package:easyinventory/controllers/settings.controller.dart';
-import 'package:easyinventory/controllers/authentication.controller.dart';
 import 'package:easyinventory/views/authentication/login.dart';
+import 'package:easyinventory/controllers/item.controller.dart';
 
-/// Example usage:
-/// final settingsController = SettingsController(authController: AuthController());
-/// Navigator.push(context, MaterialPageRoute(builder: (_) => SettingsPage(controller: settingsController)));
 class SettingsPage extends StatefulWidget {
   final SettingsController settingsController;
+  final ItemController itemController; // <-- Added
 
-  const SettingsPage({super.key, required this.settingsController});
+  const SettingsPage({
+    super.key,
+    required this.settingsController,
+    required this.itemController, // <-- Added
+  });
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -43,8 +46,12 @@ class _SettingsPageState extends State<SettingsPage> {
         title: const Text('Sign out'),
         content: const Text('Are you sure you want to sign out?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sign out')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Sign out')),
         ],
       ),
     );
@@ -53,16 +60,17 @@ class _SettingsPageState extends State<SettingsPage> {
 
     final err = await ctrl.signOut();
     if (err == null) {
-      // Navigate to login and remove all previous routes
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
         (route) => false,
       );
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Signed out')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Signed out')));
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sign out failed: $err')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Sign out failed: $err')));
     }
   }
 
@@ -79,57 +87,75 @@ class _SettingsPageState extends State<SettingsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Profile row
+              /// Profile Section
               Row(
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundImage:
-                        (photoUrl != null && photoUrl.isNotEmpty) ? NetworkImage(photoUrl) as ImageProvider : null,
-                    child: (photoUrl == null || photoUrl.isEmpty) ? const Icon(Icons.person, size: 30) : null,
+                    backgroundImage: (photoUrl != null && photoUrl.isNotEmpty)
+                        ? NetworkImage(photoUrl)
+                        : null,
+                    child: (photoUrl == null || photoUrl.isEmpty)
+                        ? const Icon(Icons.person, size: 30)
+                        : null,
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
                       userEmail,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.w500),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
 
+              /// Sign Out
               ElevatedButton(
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14)),
                 onPressed: _confirmSignOut,
                 child: const Text('Sign Out'),
               ),
-
               const SizedBox(height: 20),
 
+              /// Manage Fields
               ListTile(
                 tileColor: Colors.grey[200],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
                 title: const Text('Manage Fields'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  // navigate
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ManageFieldsPage(
+                        itemController: widget.itemController,
+                      ),
+                    ),
+                  );
                 },
               ),
               const SizedBox(height: 12),
 
+              /// Language
               ListTile(
                 tileColor: Colors.grey[200],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
                 title: const Text('Language'),
                 trailing: Text(ctrl.language),
                 onTap: () => ctrl.toggleLanguage(),
               ),
               const SizedBox(height: 12),
 
+              /// Notification
               ListTile(
                 tileColor: Colors.grey[200],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
                 title: const Text('Notification'),
                 trailing: Switch(
                   value: ctrl.notificationsEnabled,

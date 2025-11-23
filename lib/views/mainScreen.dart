@@ -1,3 +1,4 @@
+import 'package:easyinventory/controllers/supplier.controller.dart';
 import 'package:flutter/material.dart';
 import 'package:easyinventory/controllers/item.controller.dart';
 import 'package:easyinventory/controllers/sell.controller.dart';
@@ -23,6 +24,7 @@ class _MainScreenState extends State<MainScreen> {
   late final ItemController itemController;
   late final SellController sellController;
   late final SettingsController settingsController;
+  late final SupplierController supplierController;
 
   // Make pages lazy (build after controllers are ready)
   late final List<Widget> _pages;
@@ -36,13 +38,14 @@ class _MainScreenState extends State<MainScreen> {
     itemController = ItemController();
     sellController = SellController(itemController: itemController);
     settingsController = SettingsController(authController: authController);
+    supplierController = SupplierController();
 
     // now that controllers exist, create pages
     _pages = [
       DashboardPage(itemController: itemController, sellController: sellController),
-      ItemsPage(itemController: itemController, sellController: sellController),
+      ItemsPage(itemController: itemController, sellController: sellController, supplierController: supplierController,),
       SellPage(itemController: itemController, sellController: sellController),
-      SettingsPage(settingsController: settingsController),
+      SettingsPage(settingsController: settingsController, itemController: itemController,),
     ];
   }
 

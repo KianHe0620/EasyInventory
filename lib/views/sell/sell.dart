@@ -1,12 +1,16 @@
+// lib/views/sell/sell.page.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../controllers/item.controller.dart';
 import '../../controllers/sell.controller.dart';
 import '../sell/sale_history.page.dart';
 import '../widgets/quantity_box.global.dart';
+import 'package:easyinventory/views/utils/barcode_scanner.utils.dart';
+import '../../models/item.model.dart';
 
 class SellPage extends StatefulWidget {
   final ItemController itemController;
-  final SellController sellController; // ✅ passed from ItemsPage
+  final SellController sellController;
 
   const SellPage({
     super.key,
@@ -20,11 +24,78 @@ class SellPage extends StatefulWidget {
 
 class _SellPageState extends State<SellPage> {
   late SellController sellController;
+  bool _isCommitting = false;
 
   @override
   void initState() {
     super.initState();
-    sellController = widget.sellController; // ✅ use shared instance
+    sellController = widget.sellController;
+    widget.itemController.addListener(_onDataChanged);
+    sellController.addListener(_onDataChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.itemController.removeListener(_onDataChanged);
+    sellController.removeListener(_onDataChanged);
+    super.dispose();
+  }
+
+  void _onDataChanged() {
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  Future<void> _scanAndAddToCart() async {
+    final result = await Navigator.push<String?>(
+      context,
+      MaterialPageRoute(builder: (_) => const BarcodeScannerPage()),
+    );
+
+    if (result == null || result.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Barcode scan cancelled')));
+      return;
+    }
+
+    final matched = widget.itemController.items.where((it) => it.barcode == result).toList();
+    if (matched.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No item found for barcode: $result')));
+      return;
+    }
+
+    final item = matched.first;
+    final currentQty = sellController.getQuantity(item.id);
+    sellController.setQuantity(item.id, currentQty + 1);
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added "${item.name}" x1 to cart')));
+    setState(() {});
+  }
+
+  Widget _buildItemThumb(String? imagePath, {double size = 50}) {
+    if (imagePath == null || imagePath.isEmpty) {
+      return Icon(Icons.image, size: size, color: Colors.grey);
+    }
+
+    try {
+      final file = File(imagePath);
+      if (file.existsSync()) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.file(file, width: size, height: size, fit: BoxFit.cover),
+        );
+      }
+    } catch (_) {}
+
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(imagePath, width: size, height: size, fit: BoxFit.cover, errorBuilder: (_, __, ___) {
+          return Icon(Icons.broken_image, size: size, color: Colors.grey);
+        }),
+      );
+    }
+
+    return Icon(Icons.image, size: size, color: Colors.grey);
   }
 
   @override
@@ -39,20 +110,17 @@ class _SellPageState extends State<SellPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.barcode_reader),
-            onPressed: () {
-              // TODO: integrate barcode scanner
-            },
+            onPressed: _scanAndAddToCart,
           ),
           IconButton(
             icon: const Icon(Icons.history),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      SaleHistoryPage(sellController: sellController),
+              Navigator.push(context, MaterialPageRoute(builder: (_) =>
+                SaleHistoryPage(
+                  sellController: sellController,
+                  itemController: widget.itemController,
                 ),
-              );
+              ));
             },
           ),
         ],
@@ -78,31 +146,16 @@ class _SellPageState extends State<SellPage> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            it.imagePath.isNotEmpty
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.asset(
-                                      it.imagePath,
-                                      width: 50,
-                                      height: 50,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                : const Icon(Icons.image,
-                                    size: 50, color: Colors.grey),
+                            _buildItemThumb(it.imagePath, size: 64),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(it.name,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16)),
+                                  Text(it.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                                   const SizedBox(height: 4),
                                   Text('RM ${it.sellingPrice.toStringAsFixed(2)}',
-                                      style: const TextStyle(
-                                          color: Colors.black54, fontSize: 14)),
+                                      style: const TextStyle(color: Colors.black54, fontSize: 14)),
                                 ],
                               ),
                             ),
@@ -123,63 +176,65 @@ class _SellPageState extends State<SellPage> {
           ),
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: Colors.grey.shade300)),
-            ),
+            decoration: BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: Colors.grey.shade300))),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  'Total: RM ${sellController.totalAmount.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                Text('Total: RM ${sellController.totalAmount.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: _isCommitting ? null : () async {
                     if (sellController.saleQuantities.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text("Cart is empty! Please add items.")),
-                      );
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Cart is empty! Please add items.")));
                       return;
                     }
-
                     final err = sellController.validate();
                     if (err != null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(err)),
-                      );
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
                       return;
                     }
 
-                    final sale = sellController.commitSale();
-                    showDialog(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Sale completed'),
-                        content: Text(
-                          'Sold items:\n${sale.itemQuantities.entries.map((e) {
-                            final it = widget.itemController.items
-                                .firstWhere((it) => it.id == e.key);
-                            return '${it.name}: ${e.value}';
-                          }).join('\n')}\n\nTotal: RM ${sale.totalAmount.toStringAsFixed(2)}',
+                    setState(() => _isCommitting = true);
+                    try {
+                      final sale = await sellController.commitSale();
+
+                      if (!mounted) return;
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Sale completed'),
+                          content: Text(
+                            'Sold items:\n${sale.itemQuantities.entries.map((e) {
+                              final it = widget.itemController.items.firstWhere(
+                                (item) => item.id == e.key,
+                                orElse: () => Item(
+                                  id: '',
+                                  name: 'Unknown',
+                                  quantity: 0,
+                                  minQuantity: 0,
+                                  purchasePrice: 0,
+                                  sellingPrice: 0,
+                                  barcode: '',
+                                  supplier: '',
+                                  field: '',
+                                  imagePath: '',
+                                ),
+                              );
+                              return '${it.name}: ${e.value}';
+                            }).join('\n')}\n\nTotal: RM ${sale.totalAmount.toStringAsFixed(2)}',
+                          ),
+                          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
                         ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            child: const Text('OK'),
-                          )
-                        ],
-                      ),
-                    );
-                    setState(() {});
+                      );
+                      if (mounted) setState(() {});
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sale failed: ${e.toString()}')));
+                    } finally {
+                      if (mounted) setState(() => _isCommitting = false);
+                    }
                   },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text('Confirm Sale'),
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                  child: _isCommitting ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Confirm Sale'),
                 ),
               ],
             ),

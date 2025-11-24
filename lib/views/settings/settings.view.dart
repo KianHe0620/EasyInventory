@@ -140,17 +140,6 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               const SizedBox(height: 12),
 
-              /// Language
-              ListTile(
-                tileColor: Colors.grey[200],
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-                title: const Text('Language'),
-                trailing: Text(ctrl.language),
-                onTap: () => ctrl.toggleLanguage(),
-              ),
-              const SizedBox(height: 12),
-
               /// Notification
               ListTile(
                 tileColor: Colors.grey[200],

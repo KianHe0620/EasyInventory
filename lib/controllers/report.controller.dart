@@ -33,34 +33,80 @@ class ReportController extends ChangeNotifier {
   }
 
   /// Generate Weekly Sales Report
+  ///
+  /// - safe when items have been deleted: falls back to 'Unknown item' and uses sale.totalAmount
+  /// - aggregates sold items by item id (name/price used if item exists)
   WeeklySalesReport generateWeeklySalesReport(DateTime start, DateTime end) {
-    final sales = sellController.salesHistory.where((s) =>
-        s.date.isAfter(start.subtract(const Duration(days: 1))) &&
-        s.date.isBefore(end.add(const Duration(days: 1))));
+    // normalize the range to include the entire start and end days
+    final DateTime startInclusive = DateTime(start.year, start.month, start.day, 0, 0, 0);
+    final DateTime endInclusive = DateTime(end.year, end.month, end.day, 23, 59, 59);
 
-    double totalValue = 0;
-    int totalSales = 0;
-    final soldItems = <Map<String, dynamic>>[];
+    final sales = sellController.salesHistory.where((s) =>
+        !s.date.isBefore(startInclusive) && !s.date.isAfter(endInclusive));
+
+    double totalValue = 0.0;
+    int totalItemsSold = 0;
+
+    // aggregate map: itemId -> { name, price, qty }
+    final Map<String, Map<String, dynamic>> aggregated = {};
 
     for (var sale in sales) {
+      // Always trust stored totalAmount (useful if items were deleted later)
       totalValue += sale.totalAmount;
-      totalSales += sale.itemQuantities.values.fold(0, (a, b) => a + b);
 
+      // Sum quantities (sum of all quantities across itemQuantities)
+      final saleQtySum = sale.itemQuantities.values.fold<int>(0, (a, b) => a + b);
+      totalItemsSold += saleQtySum;
+
+      // Aggregate per itemId
       sale.itemQuantities.forEach((itemId, qty) {
-        final item = itemController.items.firstWhere((it) => it.id == itemId);
-        soldItems.add({
-          "name": item.name,
-          "price": item.sellingPrice,
-          "qty": qty,
-        });
+        // try to resolve item details from current inventory
+        String name = 'Unknown item';
+        double? price;
+        try {
+          final it = itemController.items.firstWhere((it) => it.id == itemId);
+          name = it.name;
+          price = it.sellingPrice;
+        } catch (_) {
+          // item not found (deleted or legacy) -> leave fallback name and null price
+        }
+
+        if (!aggregated.containsKey(itemId)) {
+          aggregated[itemId] = {
+            'itemId': itemId,
+            'name': name,
+            'price': price,
+            'qty': qty,
+          };
+        } else {
+          aggregated[itemId]!['qty'] = (aggregated[itemId]!['qty'] as int) + qty;
+          // keep existing name/price if present; if name was 'Unknown' but now found, prefer found one
+          if ((aggregated[itemId]!['name'] as String).startsWith('Unknown') && name != 'Unknown item') {
+            aggregated[itemId]!['name'] = name;
+          }
+          if (aggregated[itemId]!['price'] == null && price != null) {
+            aggregated[itemId]!['price'] = price;
+          }
+        }
       });
     }
+
+    // convert aggregated map to a list sorted by qty desc
+    final soldItems = aggregated.values.map((m) {
+      return {
+        'itemId': m['itemId'],
+        'name': m['name'],
+        'price': m['price'],
+        'qty': m['qty'],
+      };
+    }).toList()
+      ..sort((a, b) => (b['qty'] as int).compareTo(a['qty'] as int));
 
     return WeeklySalesReport(
       startDate: start,
       endDate: end,
       totalValue: totalValue,
-      totalSales: totalSales,
+      totalSales: totalItemsSold,
       soldItems: soldItems,
     );
   }

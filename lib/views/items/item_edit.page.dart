@@ -1,7 +1,9 @@
-// item_edit.page.dart
+// lib/views/items/item_edit.page.dart
+import 'dart:io';
 import 'package:easyinventory/views/utils/barcode_scanner.utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../controllers/item.controller.dart';
 import '../../controllers/supplier.controller.dart';
 import '../../models/item.model.dart';
@@ -37,6 +39,11 @@ class _ItemEditPageState extends State<ItemEditPage> {
   String? supplierId;
   String field = "Uncategorized";
 
+  // We still keep a local picked file for immediate user preview when user picks from camera/gallery.
+  // But the canonical preview path is provided by controller.getEffectiveImagePath(itemId).
+  File? _pickedImageFile;
+  final ImagePicker _picker = ImagePicker();
+
   @override
   void initState() {
     super.initState();
@@ -49,6 +56,7 @@ class _ItemEditPageState extends State<ItemEditPage> {
     quantity = item?.quantity ?? 0;
     minQuantity = item?.minQuantity ?? 0;
 
+    // set supplierId by matching supplier name
     if (item != null && item.supplier.isNotEmpty) {
       final matches = widget.supplierController.filteredSuppliers.where((s) => s.name == item.supplier);
       if (matches.isNotEmpty) {
@@ -68,6 +76,9 @@ class _ItemEditPageState extends State<ItemEditPage> {
     } else {
       field = fields.isNotEmpty ? fields.first : 'Uncategorized';
     }
+
+    // Listen to controller so we can refresh preview when editingImagePaths change
+    widget.controller.addListener(_onControllerChanged);
   }
 
   @override
@@ -76,7 +87,15 @@ class _ItemEditPageState extends State<ItemEditPage> {
     purchaseCtrl.dispose();
     sellingCtrl.dispose();
     barcodeCtrl.dispose();
+    widget.controller.removeListener(_onControllerChanged);
     super.dispose();
+  }
+
+  void _onControllerChanged() {
+    if (!mounted) return;
+    setState(() {
+      // rebuild preview using controller.getEffectiveImagePath(...)
+    });
   }
 
   Future<void> _scanBarcode() async {
@@ -89,15 +108,119 @@ class _ItemEditPageState extends State<ItemEditPage> {
       setState(() {
         barcodeCtrl.text = result;
       });
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Barcode scan cancelled')));
     }
+  }
+
+  // PICK IMAGE (no crop). This sets _pickedImageFile and also informs controller of temp path.
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? picked = await _picker.pickImage(source: source, imageQuality: 85);
+      if (picked == null) {
+        // user canceled
+        return;
+      }
+
+      setState(() {
+        _pickedImageFile = File(picked.path);
+      });
+
+      // notify controller about the temp editing path so other parts of UI see it
+      if (widget.item != null) {
+        widget.controller.setEditingImagePath(widget.item!.id, _pickedImageFile!.path);
+      }
+    } on PlatformException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error accessing images: ${e.message}')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Image error: $e')));
+      }
+    }
+  }
+
+  Future<void> _removeImage() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remove photo'),
+        content: const Text('Remove the selected photo?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Remove')),
+        ],
+      ),
+    );
+    if (ok == true) {
+      // Clear local picked file and set editing path in controller to null (indicates "no image")
+      setState(() {
+        _pickedImageFile = null;
+      });
+      if (widget.item != null) {
+        widget.controller.setEditingImagePath(widget.item!.id, null);
+      }
+    }
+  }
+
+  Future<void> _showImageOptions() async {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Wrap(children: [
+          ListTile(
+            leading: const Icon(Icons.photo_camera),
+            title: const Text('Take photo'),
+            onTap: () {
+              Navigator.pop(ctx);
+              _pickImage(ImageSource.camera);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo_library),
+            title: const Text('Choose from gallery'),
+            onTap: () {
+              Navigator.pop(ctx);
+              _pickImage(ImageSource.gallery);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.delete, color: Colors.red),
+            title: const Text('Remove photo', style: TextStyle(color: Colors.red)),
+            onTap: () {
+              Navigator.pop(ctx);
+              _removeImage();
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.close),
+            title: const Text('Cancel'),
+            onTap: () => Navigator.pop(ctx),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  // helper to render decoration image using controller effective path
+  DecorationImage? _buildDecorationImage() {
+    final id = widget.item?.id;
+    if (id == null) return null;
+    final effective = widget.controller.getEffectiveImagePath(id);
+    if (effective == null || effective.isEmpty) return null;
+
+    final file = File(effective);
+    if (file.existsSync()) {
+      return DecorationImage(image: FileImage(file), fit: BoxFit.cover);
+    }
+    // If file not found on disk, still return null to show placeholder
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     final controller = widget.controller;
     final availableFields = widget.controller.getFields().toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    final previewImage = _buildDecorationImage();
 
     return Scaffold(
       appBar: AppBar(
@@ -114,6 +237,9 @@ class _ItemEditPageState extends State<ItemEditPage> {
                 return;
               }
               final selectedSupplier = widget.supplierController.getSupplierById(supplierId ?? "");
+              // get effective image path from controller (could be null => store empty string)
+              final effectivePath = widget.controller.getEffectiveImagePath(widget.item!.id) ?? '';
+
               final updatedItem = Item(
                 id: widget.item!.id,
                 name: nameCtrl.text.trim(),
@@ -124,20 +250,55 @@ class _ItemEditPageState extends State<ItemEditPage> {
                 barcode: barcodeCtrl.text.trim(),
                 supplier: selectedSupplier?.name ?? "",
                 field: field,
+                imagePath: effectivePath,
               );
 
               await controller.updateItem(widget.index!, updatedItem);
+              // clear temporary editing image for this item after persisting
+              controller.clearEditingImagePath(widget.item!.id);
               Navigator.pop(context, updatedItem);
             },
-          ),
+          )
         ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            // Image preview (placeholder)
-            Container(height: 150, width: double.infinity, color: Colors.grey[300], child: const Icon(Icons.image, size: 80)),
+            // Image (tap to change) with remove overlay
+            Stack(
+              children: [
+                GestureDetector(
+                  onTap: _showImageOptions,
+                  child: Container(
+                    height: 200,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(8),
+                      image: previewImage,
+                    ),
+                    child: (previewImage == null) ? const Center(child: Icon(Icons.image, size: 80)) : null,
+                  ),
+                ),
+                // show delete overlay only if we have an effective image (either local picked or saved)
+                if ((widget.item != null && widget.controller.getEffectiveImagePath(widget.item!.id)?.isNotEmpty == true))
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: InkWell(
+                      onTap: _removeImage,
+                      child: Container(
+                        decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(20)),
+                        padding: const EdgeInsets.all(6),
+                        child: const Icon(Icons.delete, color: Colors.white, size: 20),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text("Tap image to choose / take photo"),
             const SizedBox(height: 16),
 
             // Item Name

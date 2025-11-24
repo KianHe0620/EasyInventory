@@ -200,7 +200,7 @@ class _ItemsPageState extends State<ItemsPage> {
                           },
                         ),
                       IconButton(
-                        icon: const Icon(Icons.qr_code_scanner),
+                        icon: const Icon(Icons.barcode_reader, color: Colors.red),
                         onPressed: () async {
                           // navigate to barcode scanner and apply result
                           final result = await Navigator.push<String?>(

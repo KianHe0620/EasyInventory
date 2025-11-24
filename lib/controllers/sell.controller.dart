@@ -1,148 +1,319 @@
+// lib/controllers/sell.controller.dart
+import 'dart:async';
+import 'package:easyinventory/controllers/item.controller.dart';
 import 'package:flutter/foundation.dart';
-import '../models/item.model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/sell.model.dart';
-import 'item.controller.dart';
+import '../models/item.model.dart';
 
 class SellController extends ChangeNotifier {
   final ItemController itemController;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  /// Map of itemId → quantity to sell
   final Map<String, int> saleQuantities = {};
+  final List<Sale> salesHistory = [];
 
-  /// Store completed sales
-  final List<Sell> salesHistory = [];
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _historySub;
+  StreamSubscription<User?>? _authSub;
 
-  SellController({required this.itemController});
+  // Use late final so we can initialize with onListen in constructor
+  late final StreamController<List<Sale>> _salesStreamController;
 
-  /// Initialize saleQuantities to zero (or clear)
-  void reset() {
-    saleQuantities.clear();
-    notifyListeners();
+  SellController({required this.itemController}) {
+    // create a broadcast controller that emits current value to new listeners
+    _salesStreamController = StreamController<List<Sale>>.broadcast(
+      onListen: () {
+        if (kDebugMode) print('salesStream onListen: emitting ${salesHistory.length} items');
+        try {
+          _salesStreamController.add(List<Sale>.from(salesHistory));
+        } catch (e) {
+          if (kDebugMode) print('salesStream onListen: add failed: $e');
+        }
+      },
+    );
+
+    // Start listening to auth changes so we start/stop Firestore listener properly
+    _authSub = _auth.authStateChanges().listen((user) {
+      if (kDebugMode) print('SellController auth change: user=${user?.uid}');
+      if (user != null) {
+        _startListeningToFirestore(user.uid);
+        loadSalesOnce();
+      } else {
+        _historySub?.cancel();
+        _historySub = null;
+        salesHistory.clear();
+        // ensure new listeners see the cleared list
+        _salesStreamController.add(List<Sale>.from(salesHistory));
+        notifyListeners();
+      }
+    });
+
+    // if there's already a signed-in user at construction time, start listening
+    final current = _auth.currentUser;
+    if (current != null) {
+      _startListeningToFirestore(current.uid);
+      loadSalesOnce();
+    }
   }
 
-  /// Set how many units of `item` will be sold
+  @override
+  void dispose() {
+    _historySub?.cancel();
+    _authSub?.cancel();
+    _salesStreamController.close();
+    super.dispose();
+  }
+
+  // -------------------------
+  // Cart helpers
+  // -------------------------
+  int getQuantity(String itemId) => saleQuantities[itemId] ?? 0;
+
   void setQuantity(String itemId, int qty) {
     if (qty <= 0) {
-      saleQuantities.remove(itemId); // remove completely
+      saleQuantities.remove(itemId);
     } else {
       saleQuantities[itemId] = qty;
     }
     notifyListeners();
   }
 
-  /// Get the quantity set, default to 0
-  int getQuantity(String itemId) {
-    return saleQuantities[itemId] ?? 0;
+  void clearCart() {
+    saleQuantities.clear();
+    notifyListeners();
   }
 
-  /// Compute total for this sale
   double get totalAmount {
     double sum = 0.0;
-    saleQuantities.forEach((itemId, qty) {
-      final item = itemController.items.firstWhere(
-        (it) => it.id == itemId,
-        orElse: () => throw Exception("Item $itemId not found"),
-      );
-      sum += item.sellingPrice * qty;
-    });
+    for (final entry in saleQuantities.entries) {
+      final itemId = entry.key;
+      final qty = entry.value;
+      try {
+        final it = itemController.items.firstWhere((i) => i.id == itemId);
+        sum += it.sellingPrice * qty;
+      } catch (_) {
+        // missing item -> skip (we rely on sale.totalAmount stored)
+      }
+    }
     return sum;
   }
 
-  /// Validate that all requested quantities are <= available stock
-  /// Returns null if OK, otherwise returns error message
   String? validate() {
-    for (var entry in saleQuantities.entries) {
-      final itemId = entry.key;
-      final qty = entry.value;
-
-      if (qty <= 0) continue;
-
-      final index = itemController.items.indexWhere((it) => it.id == itemId);
-      if (index == -1) {
-        return "Item $itemId not found";
-      }
-      final item = itemController.items[index];
-
-      if (qty > item.quantity) {
-        return "Cannot sell $qty of ${item.name}, only ${item.quantity} in stock.";
+    if (saleQuantities.isEmpty) return 'Cart is empty';
+    for (final e in saleQuantities.entries) {
+      final id = e.key;
+      final qty = e.value;
+      final it = itemController.items.firstWhere((i) => i.id == id, orElse: () => Item(
+        id: '',
+        name: 'Unknown',
+        quantity: 0,
+        minQuantity: 0,
+        purchasePrice: 0,
+        sellingPrice: 0,
+        barcode: '',
+        supplier: '',
+        field: '',
+        imagePath: '',
+      ));
+      if (it.id.isNotEmpty && qty > it.quantity) {
+        return 'Insufficient stock for ${it.name}';
       }
     }
     return null;
   }
 
-  /// Execute the sale: subtract from item stocks, return a SaleTransaction
-  /// Also stores the sale into history
-  Sell commitSale() {
-    final error = validate();
-    if (error != null) {
-      throw Exception(error);
-    }
+  // -------------------------
+  // Commit sale (implemented)
+  // -------------------------
+  Future<Sale> commitSale({bool persistToFirestore = true}) async {
+    final err = validate();
+    if (err != null) throw Exception(err);
 
-    final Map<String, int> sold = {};
-    saleQuantities.forEach((itemId, qty) {
-      if (qty > 0) {
-        sold[itemId] = qty;
-        final idx = itemController.items.indexWhere((it) => it.id == itemId);
-        final it = itemController.items[idx];
-        final updated = it.copyWith(quantity: it.quantity - qty);
-        itemController.updateItem(idx, updated);
-      }
-    });
+    final id = _firestore.collection('tmp').doc().id;
+    final now = DateTime.now();
+    final totals = totalAmount;
 
-    final sale = Sell(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      date: DateTime.now(),
-      itemQuantities: sold,
-      totalAmount: totalAmount,
+    // use item IDs as keys
+    final Map<String, int> itemQuantities = Map<String, int>.from(saleQuantities);
+
+    final sale = Sale(
+      id: id,
+      date: now,
+      itemQuantities: itemQuantities,
+      totalAmount: totals,
     );
 
-    // Save to history
-    salesHistory.add(sale);
+    if (kDebugMode) print('commitSale: saving sale with keys: ${itemQuantities.keys.toList()}');
 
-    // After commit, reset saleQuantities
-    reset();
-    notifyListeners();
-    return sale;
-  }
+    try {
+      // update each item (await updateItem)
+      for (final entry in saleQuantities.entries) {
+        final itemId = entry.key;
+        final qty = entry.value;
+        final idx = itemController.items.indexWhere((it) => it.id == itemId);
+        if (idx != -1) {
+          final it = itemController.items[idx];
+          final updated = it.copyWith(quantity: (it.quantity - qty));
+          try {
+            // itemController.updateItem is async, await it
+            await itemController.updateItem(idx, updated);
+            if (kDebugMode) print('commitSale: updated item $itemId -> ${updated.quantity}');
+          } catch (e) {
+            if (kDebugMode) print('commitSale: failed to update item $itemId: $e');
+            // continue; we still want to record the sale even if updating a single item fails
+          }
+        } else {
+          if (kDebugMode) print('commitSale: item not found locally: $itemId');
+        }
+      }
 
-  /// Sort sales by time (newest first)
-  List<Sell> sortSales(List<Sell> sales) {
-    List<Sell> sorted = List.from(sales);
-    sorted.sort((a, b) => b.date.compareTo(a.date));
-    return sorted;
-  }
+      // local history + stream
+      salesHistory.insert(0, sale);
+      _salesStreamController.add(List<Sale>.from(salesHistory));
+      notifyListeners();
 
-  /// Filter sales by selected date
-  List<Sell> filterSalesByDate(List<Sell> sales, DateTime? selectedDate) {
-    if (selectedDate == null) return sales;
+      // persist to firestore (doesn't block clearing cart on error)
+      if (persistToFirestore) {
+        final user = _auth.currentUser;
+        if (user != null) {
+          try {
+            final col = _firestore.collection('users').doc(user.uid).collection('sales');
+            await col.doc(sale.id).set(sale.toMap());
+            if (kDebugMode) print('commitSale: saved sale ${sale.id} to firestore for uid=${user.uid}');
+          } catch (e) {
+            if (kDebugMode) print('commitSale: failed to save sale to firestore: $e');
+            // consider queuing unsynced sale if offline reliability needed
+          }
+        } else {
+          if (kDebugMode) print('commitSale: no user signed in; skipped firestore save');
+        }
+      }
 
-    return sales.where((sale) {
-      final dt = sale.date;
-      return dt.year == selectedDate.year &&
-          dt.month == selectedDate.month &&
-          dt.day == selectedDate.day;
-    }).toList();
-  }
-
-  /// Simple date formatter (no intl needed)
-  String formatDate(DateTime dt) {
-    return "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} "
-        "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
-  }
-
-  /// Calculate Profit on dashboard
-  double getTodayProfit() {
-    final now = DateTime.now();
-    final todaySales = salesHistory.where((sale) =>
-        sale.date.year == now.year &&
-        sale.date.month == now.month &&
-        sale.date.day == now.day);
-
-    double total = 0.0;
-    for (final sale in todaySales) {
-      total += sale.totalAmount;
+      return sale;
+    } finally {
+      // always clear cart and notify
+      clearCart();
+      if (kDebugMode) print('commitSale: cart cleared');
     }
-    return total;
   }
 
+  // -------------------------
+  // Migration helper
+  // -------------------------
+  Future<void> fixLegacySales({bool dryRun = true}) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      if (kDebugMode) print('fixLegacySales: no user signed in');
+      return;
+    }
+    final colRef = _firestore.collection('users').doc(user.uid).collection('sales');
+    final snap = await colRef.get();
+    for (final doc in snap.docs) {
+      final data = doc.data();
+      final Map<String, dynamic>? itemMap = (data['itemQuantities'] as Map<String, dynamic>?);
+      if (itemMap == null) continue;
+      final invalidKeys = <String>[];
+      for (final k in itemMap.keys) {
+        final exists = itemController.items.any((it) => it.id == k);
+        if (!exists) invalidKeys.add(k);
+      }
+      if (invalidKeys.isNotEmpty) {
+        if (kDebugMode) print('fixLegacySales: doc ${doc.id} invalid keys: $invalidKeys');
+        if (!dryRun) {
+          final updates = {
+            'legacyItemQuantities': itemMap,
+            'itemQuantities': <String, dynamic>{},
+          };
+          await colRef.doc(doc.id).update(updates);
+          if (kDebugMode) print('fixLegacySales: updated doc ${doc.id}');
+        }
+      }
+    }
+    if (kDebugMode) print('fixLegacySales: done (dryRun=$dryRun)');
+  }
+
+  // -------------------------
+  // Firestore listener
+  // -------------------------
+  void _startListeningToFirestore([String? uid]) {
+    final userId = uid ?? _auth.currentUser?.uid;
+    if (userId == null) {
+      if (kDebugMode) print('_startListeningToFirestore: no uid');
+      return;
+    }
+    _historySub?.cancel();
+    try {
+      final col = _firestore.collection('users').doc(userId).collection('sales').orderBy('date', descending: true);
+      if (kDebugMode) print('_startListeningToFirestore: listening at users/$userId/sales');
+      _historySub = col.snapshots().listen((snap) {
+        if (kDebugMode) print('_startListeningToFirestore: got ${snap.docs.length} docs');
+        salesHistory.clear();
+        for (final doc in snap.docs) {
+          final data = doc.data();
+          try {
+            salesHistory.add(Sale.fromMap(data));
+          } catch (e) {
+            if (kDebugMode) print('parse sale doc ${doc.id} failed: $e');
+          }
+        }
+        _salesStreamController.add(List<Sale>.from(salesHistory));
+        notifyListeners();
+      }, onError: (err) {
+        if (kDebugMode) print('SellController history listen error: $err');
+        _salesStreamController.addError(err);
+      });
+    } catch (e) {
+      if (kDebugMode) print('SellController firestore listen failed: $e');
+      _salesStreamController.addError(e);
+    }
+  }
+
+  Stream<List<Sale>> salesStream() => _salesStreamController.stream;
+
+  Future<void> loadSalesOnce() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      if (kDebugMode) print('loadSalesOnce: no user signed in');
+      return;
+    }
+    try {
+      final snap = await _firestore.collection('users').doc(user.uid).collection('sales').orderBy('date', descending: true).get();
+      salesHistory.clear();
+      for (final doc in snap.docs) {
+        try {
+          salesHistory.add(Sale.fromMap(doc.data()));
+        } catch (e) {
+          if (kDebugMode) print('loadSalesOnce parse error doc ${doc.id}: $e');
+        }
+      }
+      _salesStreamController.add(List<Sale>.from(salesHistory));
+      notifyListeners();
+    } catch (e) {
+      if (kDebugMode) print('loadSalesOnce failed: $e');
+      _salesStreamController.addError(e);
+    }
+  }
+
+  // -------------------------
+  // Helpers
+  // -------------------------
+  double getTodayProfit() {
+    final today = DateTime.now();
+    double profit = 0.0;
+    for (final s in salesHistory) {
+      if (s.date.year == today.year && s.date.month == today.month && s.date.day == today.day) {
+        s.itemQuantities.forEach((itemId, qty) {
+          try {
+            final it = itemController.items.firstWhere((i) => i.id == itemId);
+            profit += (it.sellingPrice - it.purchasePrice) * qty;
+          } catch (_) {
+            // item missing -> skip
+          }
+        });
+      }
+    }
+    return profit;
+  }
 }

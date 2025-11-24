@@ -28,13 +28,6 @@ class SettingsController extends ChangeNotifier {
     // TODO: persist to storage (SharedPreferences / Firestore) if needed
   }
 
-  void toggleLanguage() {
-    final newLang = (_settings.language == "EN") ? "MY" : "EN";
-    _settings = _settings.copyWith(language: newLang);
-    notifyListeners();
-    // TODO: persist to storage if required
-  }
-
   // --- auth actions ---
   /// Signs out (delegates to AuthController). Returns null on success, error msg otherwise.
   Future<String?> signOut() async {

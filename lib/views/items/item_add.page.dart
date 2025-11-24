@@ -1,8 +1,10 @@
-// item_add.page.dart
+// lib/views/items/item_add.page.dart
+import 'dart:io';
 import 'package:easyinventory/views/utils/barcode_scanner.utils.dart';
 import 'package:easyinventory/views/widgets/item_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../controllers/item.controller.dart';
 import '../../controllers/supplier.controller.dart';
 import '../../models/item.model.dart';
@@ -34,6 +36,9 @@ class _ItemAddPageState extends State<ItemAddPage> {
   int minQuantity = 0;
   String? supplierId;
   String field = "Uncategorized";
+
+  File? _imageFile; // holds picked image
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -70,18 +75,98 @@ class _ItemAddPageState extends State<ItemAddPage> {
       setState(() {
         barcodeCtrl.text = result;
       });
-    } else {
-      // user cancelled or scanner returned nothing
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Barcode scan cancelled')),
-      );
     }
+  }
+
+  // pick image only (no crop)
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? picked = await _picker.pickImage(source: source, imageQuality: 85);
+      if (picked == null) return; // user cancelled
+      setState(() {
+        _imageFile = File(picked.path);
+      });
+    } on PlatformException catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error accessing images: ${e.message}')));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Image error: $e')));
+    }
+  }
+
+  Future<void> _removeImage() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remove photo'),
+        content: const Text('Remove the selected photo?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      setState(() {
+        _imageFile = null;
+      });
+    }
+  }
+
+  Future<void> _showImageOptions() async {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Wrap(children: [
+          ListTile(
+            leading: const Icon(Icons.photo_camera),
+            title: const Text('Take photo'),
+            onTap: () {
+              Navigator.pop(ctx);
+              _pickImage(ImageSource.camera);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo_library),
+            title: const Text('Choose from gallery'),
+            onTap: () {
+              Navigator.pop(ctx);
+              _pickImage(ImageSource.gallery);
+            },
+          ),
+          if (_imageFile != null)
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('Remove photo', style: TextStyle(color: Colors.red)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _removeImage();
+              },
+            ),
+          ListTile(
+            leading: const Icon(Icons.close),
+            title: const Text('Cancel'),
+            onTap: () => Navigator.pop(ctx),
+          ),
+        ]),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final controller = widget.controller;
     final availableFields = widget.controller.getFields().toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+
+    // build preview from picked image (local) — for Add page there's no saved item yet
+    final DecorationImage? previewImage = (_imageFile != null)
+        ? DecorationImage(image: FileImage(_imageFile!), fit: BoxFit.cover)
+        : null;
 
     return Scaffold(
       appBar: AppBar(
@@ -95,9 +180,9 @@ class _ItemAddPageState extends State<ItemAddPage> {
             onPressed: () async {
               if (_formKey.currentState!.validate()) {
                 final selectedSupplier = widget.supplierController.getSupplierById(supplierId ?? "");
-
+                // For add, leave id empty so controller.addItem will generate the doc id.
                 final newItem = Item(
-                  id: DateTime.now().toString(),
+                  id: '', // let controller addItem create doc id
                   name: nameCtrl.text.trim(),
                   quantity: quantity,
                   minQuantity: minQuantity,
@@ -106,13 +191,21 @@ class _ItemAddPageState extends State<ItemAddPage> {
                   barcode: barcodeCtrl.text.trim(),
                   supplier: selectedSupplier?.name ?? "",
                   field: field,
+                  imagePath: _imageFile?.path ?? "", // persist empty if removed
                 );
 
+                // Add item (controller will generate id if empty)
                 await controller.addItem(newItem);
+
+                // Clear local picked image to avoid retaining large files in memory
+                setState(() {
+                  _imageFile = null;
+                });
+
                 Navigator.pop(context, newItem);
               }
             },
-          ),
+          )
         ],
       ),
       body: SafeArea(
@@ -121,13 +214,48 @@ class _ItemAddPageState extends State<ItemAddPage> {
           child: Form(
             key: _formKey,
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              // Image placeholder (you can integrate upload later)
-              Container(height: 150, width: double.infinity, color: Colors.grey[300], child: const Icon(Icons.image, size: 80)),
+              // Image placeholder (tap to pick). Overlay remove icon if photo exists.
+              Stack(
+                children: [
+                  GestureDetector(
+                    onTap: _showImageOptions,
+                    child: Container(
+                      height: 200,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(8),
+                        image: previewImage,
+                      ),
+                      child: _imageFile == null ? const Center(child: Icon(Icons.image, size: 80)) : null,
+                    ),
+                  ),
+                  if (_imageFile != null)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: InkWell(
+                        onTap: _removeImage,
+                        child: Container(
+                          decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(20)),
+                          padding: const EdgeInsets.all(6),
+                          child: const Icon(Icons.delete, color: Colors.white, size: 20),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text("Tap image to choose / take photo"),
               const SizedBox(height: 16),
 
               // Item Name
               sectionLabel("Item’s Name"),
-              TextFormField(controller: nameCtrl, decoration: inputDecoration(), validator: (val) => val == null || val.isEmpty ? "Please enter item name" : null),
+              TextFormField(
+                controller: nameCtrl,
+                decoration: inputDecoration(),
+                validator: (val) => val == null || val.isEmpty ? "Please enter item name" : null,
+              ),
               const SizedBox(height: 16),
 
               // Quantity + Min Qty

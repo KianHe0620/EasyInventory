@@ -1,5 +1,5 @@
 import 'package:easyinventory/controllers/smart_report.controller.dart';
-import 'package:easyinventory/views/reports/report.view.dart';
+import 'package:easyinventory/views/reports/reports.page.dart';
 import 'package:easyinventory/views/suppliers/suppliers.dart';
 import 'package:easyinventory/views/utils/global.colors.dart';
 import 'package:flutter/material.dart';

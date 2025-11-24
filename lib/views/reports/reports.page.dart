@@ -2,10 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:easyinventory/controllers/report.controller.dart';
 import 'package:easyinventory/controllers/smart_report.controller.dart';
-import 'package:easyinventory/views/reports/inventory_value_report.view.dart';
-import 'package:easyinventory/views/reports/low_stock_report.view.dart';
-import 'package:easyinventory/views/reports/weekly_sales_report.view.dart';
-import 'package:easyinventory/views/reports/smart_report_form.view.dart';
+import 'package:easyinventory/views/reports/inventory_value_report.page.dart';
+import 'package:easyinventory/views/reports/low_stock_report.page.dart';
+import 'package:easyinventory/views/reports/weekly_sales_report.page.dart';
+import 'package:easyinventory/views/reports/smart_report_form.page.dart';
 
 class ReportPage extends StatelessWidget {
   final ReportController reportController;

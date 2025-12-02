@@ -2,7 +2,6 @@ import 'package:easyinventory/views/reports/smart_report_result.page.dart';
 import 'package:flutter/material.dart';
 import 'package:easyinventory/controllers/smart_report.controller.dart';
 import 'package:easyinventory/models/smart_report.model.dart';
-import 'dart:math';
 
 class SmartReportFormPage extends StatefulWidget {
   final SmartReportController controller;

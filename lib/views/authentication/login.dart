@@ -2,7 +2,6 @@
 import 'package:easyinventory/controllers/authentication.controller.dart';
 import 'package:easyinventory/views/authentication/register.dart';
 import 'package:easyinventory/views/mainScreen.dart';
-import 'package:easyinventory/views/utils/global.colors.dart';
 import 'package:easyinventory/views/widgets/button.global.dart';
 import 'package:easyinventory/views/widgets/text_form.global.dart';
 import 'package:flutter/material.dart';
@@ -120,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: _forgotPassword,
                       child: Text(
                         "Forgot Password?",
-                        style: TextStyle(color: GlobalColors.mainColor),
+                        style: TextStyle(color: const Color(0xFF0A84D0)),
                       )),
                 ),
                 const SizedBox(height: 8),
@@ -129,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 _loading
                     ? const Center(child: CircularProgressIndicator())
                     : ButtonGlobal(
-                        boxColor: GlobalColors.mainColor,
+                        boxColor: const Color(0xFF0A84D0),
                         text: 'Log In',
                         textColor: Colors.white,
                         width: 0,
@@ -201,7 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Text(
                             'Register',
                             style: TextStyle(
-                              color: GlobalColors.mainColor,
+                              color: const Color(0xFF0A84D0),
                               fontSize: 18,
                             ),
                           )),

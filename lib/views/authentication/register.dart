@@ -1,7 +1,6 @@
 import 'package:easyinventory/controllers/authentication.controller.dart';
 import 'package:easyinventory/views/authentication/Login.dart';
 import 'package:flutter/material.dart';
-import 'package:easyinventory/views/utils/global.colors.dart';
 import 'package:easyinventory/views/widgets/button.global.dart';
 import 'package:easyinventory/views/widgets/text_form.global.dart';
 
@@ -104,7 +103,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 loading
                     ? const Center(child: CircularProgressIndicator())
                     : ButtonGlobal(
-                        boxColor: GlobalColors.mainColor,
+                        boxColor: const Color(0xFF0A84D0),
                         text: 'Register',
                         textColor: Colors.white,
                         width: 0,
@@ -128,7 +127,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Text(
                         'Login',
                         style: TextStyle(
-                          color: GlobalColors.mainColor,
+                          color: const Color(0xFF0A84D0),
                           fontSize: 18,
                         ),
                       ),

@@ -69,7 +69,7 @@ class _MainScreenState extends State<MainScreen> {
           setState(() {
             _currentIndex = index;
           });
-        },
+        }, itemController: itemController,
       ),
     );
   }

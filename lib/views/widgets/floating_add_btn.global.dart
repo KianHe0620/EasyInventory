@@ -1,4 +1,3 @@
-import 'package:easyinventory/views/utils/global.colors.dart';
 import 'package:flutter/material.dart';
 
 class FloatingAddBtn extends StatelessWidget {
@@ -10,7 +9,7 @@ class FloatingAddBtn extends StatelessWidget {
   Widget build(BuildContext context) {
     return FloatingActionButton(
       onPressed: onPressed,
-      backgroundColor: GlobalColors.mainColor,
+      backgroundColor: const Color(0xFF0A84D0),
       child: Icon(
         Icons.add,
         size: 28,

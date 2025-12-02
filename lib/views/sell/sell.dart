@@ -1,4 +1,3 @@
-// lib/views/sell/sell.page.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../controllers/item.controller.dart';
@@ -106,7 +105,14 @@ class _SellPageState extends State<SellPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sell Items'),
+        backgroundColor: Colors.white,
+        title: const Text(
+          'Sell Items',
+          style: TextStyle(
+            fontSize: 34, 
+            fontWeight: FontWeight.bold
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.barcode_reader),
@@ -233,8 +239,16 @@ class _SellPageState extends State<SellPage> {
                       if (mounted) setState(() => _isCommitting = false);
                     }
                   },
-                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-                  child: _isCommitting ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Confirm Sale'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    backgroundColor: const Color(0xFF0A84D0)
+                  ),
+                  child: _isCommitting
+                  ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2)) 
+                  : const Text(
+                    'Confirm Sale',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             ),

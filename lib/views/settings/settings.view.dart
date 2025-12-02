@@ -1,4 +1,3 @@
-// lib/views/settings/settings.page.dart
 import 'package:easyinventory/views/settings/manage_field.view.dart';
 import 'package:flutter/material.dart';
 import 'package:easyinventory/controllers/settings.controller.dart';
@@ -7,12 +6,12 @@ import 'package:easyinventory/controllers/item.controller.dart';
 
 class SettingsPage extends StatefulWidget {
   final SettingsController settingsController;
-  final ItemController itemController; // <-- Added
+  final ItemController itemController; 
 
   const SettingsPage({
     super.key,
     required this.settingsController,
-    required this.itemController, // <-- Added
+    required this.itemController, 
   });
 
   @override
@@ -47,11 +46,13 @@ class _SettingsPageState extends State<SettingsPage> {
         content: const Text('Are you sure you want to sign out?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Sign out')),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sign out'),
+          ),
         ],
       ),
     );
@@ -80,14 +81,20 @@ class _SettingsPageState extends State<SettingsPage> {
     final photoUrl = ctrl.userPhotoUrl;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        title: const Text(
+          'Settings',
+          style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold),
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              /// Profile Section
+              // Profile Section
               Row(
                 children: [
                   CircleAvatar(
@@ -104,27 +111,35 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: Text(
                       userEmail,
                       style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w500),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
 
-              /// Sign Out
+              // Sign Out Button
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  backgroundColor: const Color(0xFF0A84D0),
+                ),
                 onPressed: _confirmSignOut,
-                child: const Text('Sign Out'),
+                child: const Text(
+                  'Sign Out',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
               const SizedBox(height: 20),
 
-              /// Manage Fields
+              // Manage Fields
               ListTile(
                 tileColor: Colors.grey[200],
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 title: const Text('Manage Fields'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
@@ -137,19 +152,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   );
                 },
-              ),
-              const SizedBox(height: 12),
-
-              /// Notification
-              ListTile(
-                tileColor: Colors.grey[200],
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-                title: const Text('Notification'),
-                trailing: Switch(
-                  value: ctrl.notificationsEnabled,
-                  onChanged: (v) => ctrl.toggleNotifications(v),
-                ),
               ),
             ],
           ),

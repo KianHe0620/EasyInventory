@@ -50,8 +50,8 @@ class _ItemEditPageState extends State<ItemEditPage> {
     final item = widget.item;
 
     nameCtrl = TextEditingController(text: item?.name ?? "");
-    purchaseCtrl = TextEditingController(text: item != null ? item.purchasePrice.toString() : "");
-    sellingCtrl = TextEditingController(text: item != null ? item.sellingPrice.toString() : "");
+    purchaseCtrl = TextEditingController(text: item != null ? item.purchasePrice.toStringAsFixed(2) : "");
+    sellingCtrl = TextEditingController(text: item != null ? item.sellingPrice.toStringAsFixed(2) : "");
     barcodeCtrl = TextEditingController(text: item?.barcode ?? "");
     quantity = item?.quantity ?? 0;
     minQuantity = item?.minQuantity ?? 0;
@@ -334,7 +334,12 @@ class _ItemEditPageState extends State<ItemEditPage> {
             sectionLabel("Item’s Barcode"),
             TextFormField(
               controller: barcodeCtrl,
-              decoration: inputDecoration().copyWith(suffixIcon: IconButton(icon: const Icon(Icons.barcode_reader, color: Colors.red), onPressed: _scanBarcode)),
+              decoration: inputDecoration().copyWith(
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.barcode_reader), 
+                  onPressed: _scanBarcode
+                )
+              ),
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             ),

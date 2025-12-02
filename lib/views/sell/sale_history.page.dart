@@ -1,9 +1,7 @@
-// lib/views/sell/sale_history.page.dart
 import 'package:flutter/material.dart';
 import '../../controllers/sell.controller.dart';
 import '../../controllers/item.controller.dart';
 import '../../models/sell.model.dart';
-import '../../models/item.model.dart';
 
 class SaleHistoryPage extends StatefulWidget {
   final SellController sellController;
@@ -87,11 +85,12 @@ class _SaleHistoryPageState extends State<SaleHistoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor:Colors.white,
         title: const Text('Sales History'),
         actions: [
           IconButton(
             tooltip: 'Clear date filter',
-            icon: const Icon(Icons.clear),
+            icon: const Icon(Icons.refresh),
             onPressed: _clearFilter,
           ),
         ],
@@ -106,14 +105,22 @@ class _SaleHistoryPageState extends State<SaleHistoryPage> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: _pickStartDate,
-                    child: Text(_startDate == null ? 'Start date' : 'Start: ${_prettyDate(_startDate!)}'),
+                    child: Text(_startDate == null 
+                    ? 'Start date' 
+                    : 'Start: ${_prettyDate(_startDate!)}',
+                    style: TextStyle(color: Colors.black),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: OutlinedButton(
                     onPressed: _pickEndDate,
-                    child: Text(_endDate == null ? 'End date' : 'End: ${_prettyDate(_endDate!)}'),
+                    child: Text(_endDate == null 
+                    ? 'End date' 
+                    : 'End: ${_prettyDate(_endDate!)}',
+                    style: TextStyle(color: Colors.black),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -121,7 +128,13 @@ class _SaleHistoryPageState extends State<SaleHistoryPage> {
                   onPressed: () {
                     setState(() {}); // refresh list with the currently selected date range
                   },
-                  child: const Text('Apply'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0A84D0)
+                  ),
+                  child: const Text(
+                    'Apply',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             ),
@@ -191,6 +204,7 @@ class _SaleHistoryPageState extends State<SaleHistoryPage> {
                         showDialog(
                           context: context,
                           builder: (dctx) => AlertDialog(
+                            backgroundColor: Colors.white,
                             title: const Text('Sale details'),
                             content: Text('Date: ${s.createdAt}\n\n$details\n\nTotal: RM ${s.totalAmount.toStringAsFixed(2)}'),
                             actions: [TextButton(onPressed: () => Navigator.pop(dctx), child: const Text('OK'))],

@@ -78,7 +78,9 @@ class _ManageFieldsPageState extends State<ManageFieldsPage> {
     final custom = widget.itemController.customFields;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Manage Fields")),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        title: const Text("Manage Fields")),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -94,7 +96,15 @@ class _ManageFieldsPageState extends State<ManageFieldsPage> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  ElevatedButton(onPressed: _addField, child: const Text("Add")),
+                  ElevatedButton(
+                    onPressed: _addField, 
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0A84D0),
+                      ),
+                    child: const Text(
+                      "Add",
+                      style: TextStyle(color: Colors.white),)
+                  ),
                 ],
               ),
               const SizedBox(height: 12),

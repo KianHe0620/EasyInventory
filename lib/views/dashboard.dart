@@ -1,7 +1,6 @@
 import 'package:easyinventory/controllers/smart_report.controller.dart';
 import 'package:easyinventory/views/reports/reports.page.dart';
 import 'package:easyinventory/views/suppliers/suppliers.dart';
-import 'package:easyinventory/views/utils/global.colors.dart';
 import 'package:flutter/material.dart';
 
 import '../../controllers/sell.controller.dart';
@@ -23,6 +22,16 @@ class DashboardPage extends StatelessWidget {
     final todayProfit = sellController.getTodayProfit();
 
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        title: const Text(
+          'Dashboard',
+          style: TextStyle(
+            fontSize: 34, 
+            fontWeight: FontWeight.bold
+          ),
+        )
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Container(
@@ -31,13 +40,6 @@ class DashboardPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title
-                const Text(
-                  'Dashboard',
-                  style: TextStyle(fontSize: 35, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 30),
-
                 // Profit Card
                 SizedBox(
                   width: double.infinity,
@@ -45,7 +47,7 @@ class DashboardPage extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                     elevation: 2,
-                    color: GlobalColors.textFieldColor,
+                    color: const Color(0xFFF2F2F2),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
@@ -69,7 +71,7 @@ class DashboardPage extends StatelessWidget {
                     // Suppliers Button
                     Expanded(
                       child: Card(
-                        color: GlobalColors.textFieldColor,
+                        color: const Color(0xFFF2F2F2),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -99,7 +101,7 @@ class DashboardPage extends StatelessWidget {
                     // Report Button
                     Expanded(
                       child: Card(
-                        color: GlobalColors.textFieldColor,
+                        color: const Color(0xFFF2F2F2),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:easyinventory/views/utils/global.colors.dart';
 
 class ButtonGlobal extends StatelessWidget {
   ButtonGlobal({super.key, required this.boxColor, required this.text, required this.textColor, required this.width, required this.onTap});
@@ -20,7 +19,7 @@ class ButtonGlobal extends StatelessWidget {
           color: boxColor,
           borderRadius: BorderRadius.circular(12),
           border: width > 0 //Set the border of button
-          ?Border.all(color: GlobalColors.textFieldColor, width: width)
+          ?Border.all(color: const Color(0xFFF2F2F2), width: width)
           : null,
         ),
         child: Text(

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:easyinventory/views/utils/global.colors.dart';
 
 class TextForm extends StatelessWidget {
   const TextForm({
@@ -33,7 +32,7 @@ class TextForm extends StatelessWidget {
             borderSide: BorderSide.none
           ),
           filled: true,
-          fillColor: GlobalColors.textFieldColor,
+          fillColor: const Color(0xFFF2F2F2),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12),
         ),
         validator: mustFill

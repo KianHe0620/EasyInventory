@@ -1,4 +1,3 @@
-import 'package:easyinventory/views/utils/global.colors.dart';
 import 'package:flutter/material.dart';
 
 class SearchBarGlobal extends StatelessWidget {
@@ -22,14 +21,14 @@ class SearchBarGlobal extends StatelessWidget {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(25),
           borderSide: BorderSide(
-            color: GlobalColors.textFieldColor,
+            color: const Color(0xFFF2F2F2),
             width: 2
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(25),
           borderSide: BorderSide(
-            color: GlobalColors.textFieldColor,
+            color: const Color(0xFFF2F2F2),
             width: 2
           ),
         ),

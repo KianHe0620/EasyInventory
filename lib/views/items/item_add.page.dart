@@ -287,7 +287,10 @@ class _ItemAddPageState extends State<ItemAddPage> {
               TextFormField(
                 controller: barcodeCtrl,
                 decoration: inputDecoration().copyWith(
-                  suffixIcon: IconButton(icon: const Icon(Icons.barcode_reader, color: Colors.red), onPressed: _scanBarcode),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.barcode_reader), 
+                    onPressed: _scanBarcode
+                  ),
                 ),
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:easyinventory/views/utils/barcode_scanner.utils.dart';
+import 'package:easyinventory/views/widgets/item_widget.dart';
 import 'package:flutter/material.dart';
 import '../../controllers/item.controller.dart';
 import '../../controllers/sell.controller.dart';
@@ -32,15 +33,13 @@ class _ItemsPageState extends State<ItemsPage> {
   @override
   void initState() {
     super.initState();
-    // Listen to controller notifications to rebuild when data changes
     widget.itemController.addListener(_onControllerChanged);
     widget.supplierController.addListener(_onControllerChanged);
 
-    // keep search text in sync
     _searchCtrl.text = widget.itemController.searchQuery;
     _searchCtrl.addListener(() {
       widget.itemController.setSearchQuery(_searchCtrl.text);
-      setState(() {}); // to update clear button visibility
+      setState(() {});
     });
   }
 
@@ -60,7 +59,6 @@ class _ItemsPageState extends State<ItemsPage> {
 
   Widget _buildItemLeading(String imagePath) {
     if (imagePath.isNotEmpty) {
-      // network image
       if (imagePath.startsWith('http')) {
         return ClipRRect(
           borderRadius: BorderRadius.circular(8),
@@ -74,7 +72,6 @@ class _ItemsPageState extends State<ItemsPage> {
         );
       }
 
-      // local file path
       try {
         final file = File(imagePath);
         if (file.existsSync()) {
@@ -89,12 +86,9 @@ class _ItemsPageState extends State<ItemsPage> {
             ),
           );
         }
-      } catch (_) {
-        // ignore and fall through to placeholder
-      }
+      } catch (_) {}
     }
 
-    // fallback icon
     return const SizedBox(
       width: 48,
       height: 48,
@@ -111,9 +105,7 @@ class _ItemsPageState extends State<ItemsPage> {
   @override
   Widget build(BuildContext context) {
     final itemCtrl = widget.itemController;
-    final supplierCtrl = widget.supplierController;
     final sellCtrl = widget.sellController;
-
     final filteredItems = itemCtrl.getFilteredSortedItems();
 
     return Scaffold(
@@ -121,7 +113,10 @@ class _ItemsPageState extends State<ItemsPage> {
         backgroundColor: Colors.white,
         title: itemCtrl.selectionMode
             ? Text('${itemCtrl.selectedIds.length} selected')
-            : const Text('Items'),
+            : const Text(
+                'Items',
+                style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold),
+              ),
         actions: [
           IconButton(
             icon: Icon(itemCtrl.selectionMode ? Icons.close : Icons.checklist),
@@ -200,13 +195,9 @@ class _ItemsPageState extends State<ItemsPage> {
                           },
                         ),
                       IconButton(
-                        icon: const Icon(Icons.barcode_reader, color: Colors.red),
+                        icon: const Icon(Icons.barcode_reader),
                         onPressed: () async {
-                          // navigate to barcode scanner and apply result
-                          final result = await Navigator.push<String?>(
-                            context,
-                            MaterialPageRoute(builder: (_) => const BarcodeScannerPage()),
-                          );
+                          final result = await Navigator.push<String?>(context, MaterialPageRoute(builder: (_) => const BarcodeScannerPage()));
                           if (result != null && result.isNotEmpty) {
                             _searchCtrl.text = result;
                             itemCtrl.setSearchQuery(result);
@@ -219,10 +210,7 @@ class _ItemsPageState extends State<ItemsPage> {
                   filled: true,
                   fillColor: const Color(0xFFF2F2F2),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
                 onChanged: (v) => itemCtrl.setSearchQuery(v),
               ),
@@ -233,29 +221,13 @@ class _ItemsPageState extends State<ItemsPage> {
               itemCount: filteredItems.length,
               itemBuilder: (context, idx) {
                 final item = filteredItems[idx];
-                // find original index in the backing items list, needed for updateItem(index,...)
                 final originalIndex = itemCtrl.items.indexWhere((it) => it.id == item.id);
 
-                return ListTile(
-                  leading: itemCtrl.selectionMode
-                      ? Checkbox(
-                          value: itemCtrl.selectedIds.contains(item.id),
-                          onChanged: (_) => setState(() => itemCtrl.toggleSelection(item.id)),
-                        )
-                      : _buildItemLeading(item.imagePath),
-                  title: Text(item.name),
-                  subtitle: Text('Price: RM ${item.sellingPrice.toStringAsFixed(2)}'),
-                  trailing: Text(
-                    item.quantity.toString(),
-                    style: TextStyle(
-                      color: item.quantity <= item.minQuantity
-                          ? Colors.red
-                          : item.quantity >= item.minQuantity + 20
-                              ? Colors.green
-                              : Colors.blue,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                return ItemTile(
+                  item: item,
+                  selectionMode: itemCtrl.selectionMode,
+                  selected: itemCtrl.selectedIds.contains(item.id),
+                  onToggleSelection: () => setState(() => itemCtrl.toggleSelection(item.id)),
                   onTap: () {
                     if (itemCtrl.selectionMode) {
                       setState(() => itemCtrl.toggleSelection(item.id));
@@ -275,6 +247,7 @@ class _ItemsPageState extends State<ItemsPage> {
                       if (updated != null) setState(() {});
                     });
                   },
+                  leadingBuilder: _buildItemLeading,
                 );
               },
             ),
@@ -282,73 +255,35 @@ class _ItemsPageState extends State<ItemsPage> {
         ],
       ),
       bottomNavigationBar: itemCtrl.selectionMode
-          ? BottomAppBar(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (itemCtrl.selectedIds.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("No items selected")),
-                          );
-                          return;
-                        }
-                        final selectedItems = itemCtrl.items.where((it) => itemCtrl.selectedIds.contains(it.id)).toList();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => BulkUpdatePage(items: selectedItems, itemController: itemCtrl),
-                          ),
-                        ).then((_) => setState(() {}));
-                      },
-                      style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-                      child: const Text("Update Quantity"),
-                    ),
-                  ),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (itemCtrl.selectedIds.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("No items selected")),
-                          );
-                          return;
-                        }
-
-                        final selectedItems = itemCtrl.items.where((it) => itemCtrl.selectedIds.contains(it.id)).toList();
-
-                        // Add selected items into SellController with qty = 1
-                        for (final item in selectedItems) {
-                          sellCtrl.setQuantity(item.id, 1);
-                        }
-
-                        // Clear selection mode
-                        setState(() {
-                          itemCtrl.toggleSelectionMode();
-                        });
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Items added to cart. Go to Sell tab.")),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
-                      child: const Text("Add to Sell"),
-                    ),
-                  ),
-                ],
-              ),
+          ? SelectionBottomBar(
+              onUpdate: () {
+                if (itemCtrl.selectedIds.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No items selected")));
+                  return;
+                }
+                final selectedItems = itemCtrl.items.where((it) => itemCtrl.selectedIds.contains(it.id)).toList();
+                Navigator.push(context, MaterialPageRoute(builder: (_) => BulkUpdatePage(items: selectedItems, itemController: itemCtrl))).then((_) => setState(() {}));
+              },
+              onAddToSell: () {
+                if (itemCtrl.selectedIds.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No items selected")));
+                  return;
+                }
+                final selectedItems = itemCtrl.items.where((it) => itemCtrl.selectedIds.contains(it.id)).toList();
+                for (final item in selectedItems) {
+                  widget.sellController.setQuantity(item.id, 1);
+                }
+                setState(() {
+                  itemCtrl.toggleSelectionMode();
+                });
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Items added to cart. Go to Sell tab.")));
+              },
             )
           : null,
       floatingActionButton: !itemCtrl.selectionMode
           ? FloatingAddBtn(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ItemAddPage(controller: itemCtrl, supplierController: widget.supplierController),
-                  ),
-                ).then((newItem) {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => ItemAddPage(controller: itemCtrl, supplierController: widget.supplierController))).then((newItem) {
                   if (newItem != null) setState(() {});
                 });
               },

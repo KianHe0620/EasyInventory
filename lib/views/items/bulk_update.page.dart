@@ -1,3 +1,5 @@
+// lib/views/items/bulk_update.page.dart
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../controllers/item.controller.dart';
 import '../../models/item.model.dart';
@@ -36,10 +38,91 @@ class _BulkUpdatePageState extends State<BulkUpdatePage> {
     Navigator.pop(context);
   }
 
+  /// Return a widget that shows a thumbnail for the given imagePath.
+  /// - local file path -> Image.file
+  /// - http(s) url -> Image.network
+  /// - non-empty string (assume asset key) -> Image.asset
+  /// - empty/null -> placeholder icon
+  Widget _buildThumb(String? imagePath, {double size = 40}) {
+    if (imagePath == null || imagePath.isEmpty) {
+      return Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Icon(Icons.image, size: size * 0.6, color: Colors.grey),
+      );
+    }
+
+    // Try as local file
+    try {
+      final file = File(imagePath);
+      if (file.existsSync()) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: Image.file(
+            file,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              width: size,
+              height: size,
+              color: Colors.grey.shade200,
+              child: Icon(Icons.broken_image, size: size * 0.6, color: Colors.grey),
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      // on platforms that don't support dart:io (web), this will throw -
+      // fall through to network/asset handling.
+    }
+
+    // Try as network URL
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: Image.network(
+          imagePath,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Container(
+            width: size,
+            height: size,
+            color: Colors.grey.shade200,
+            child: Icon(Icons.broken_image, size: size * 0.6, color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
+    // Otherwise assume it's an asset key packaged with the app.
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: Image.asset(
+        imagePath,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Container(
+          width: size,
+          height: size,
+          color: Colors.grey.shade200,
+          child: Icon(Icons.broken_image, size: size * 0.6, color: Colors.grey),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: const Text("Bulk Update"),
         actions: [
           IconButton(icon: const Icon(Icons.check), onPressed: applyChanges),
@@ -52,9 +135,7 @@ class _BulkUpdatePageState extends State<BulkUpdatePage> {
           final qty = updatedQuantities[item.id] ?? item.quantity;
 
           return ListTile(
-            leading: item.imagePath.isNotEmpty
-                ? Image.asset(item.imagePath, width: 40, height: 40, fit: BoxFit.cover)
-                : const Icon(Icons.image, size: 40, color: Colors.grey),
+            leading: _buildThumb(item.imagePath, size: 48),
             title: Text(item.name),
             subtitle: Text("Price: RM ${item.sellingPrice.toStringAsFixed(2)}"),
             trailing: Row(

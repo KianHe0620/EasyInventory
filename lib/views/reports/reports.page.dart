@@ -1,4 +1,3 @@
-// lib/views/reports/report.view.dart
 import 'package:flutter/material.dart';
 import 'package:easyinventory/controllers/report.controller.dart';
 import 'package:easyinventory/controllers/smart_report.controller.dart';
@@ -20,7 +19,10 @@ class ReportPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Reports")),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        title: const Text("Reports")
+      ),
       body: ListView(
         children: [
           ListTile(
@@ -73,9 +75,7 @@ class ReportPage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => SmartReportFormPage(
-                controller: smartReportController,
-              ),
+              builder: (_) => SmartReportFormPage(),
             ),
           );
         },

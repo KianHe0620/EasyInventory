@@ -1,10 +1,10 @@
-// lib/views/settings/manage_fields.page.dart
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../controllers/item.controller.dart';
 
 class ManageFieldsPage extends StatefulWidget {
-  final ItemController itemController;
-  const ManageFieldsPage({super.key, required this.itemController});
+  final ItemController itemController = Get.find<ItemController>();
+  ManageFieldsPage({super.key});
 
   @override
   State<ManageFieldsPage> createState() => _ManageFieldsPageState();

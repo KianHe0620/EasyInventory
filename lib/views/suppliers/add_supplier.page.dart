@@ -3,11 +3,12 @@ import 'package:easyinventory/views/widgets/app_bar.global.dart';
 import 'package:easyinventory/views/widgets/text_form.global.dart';
 import 'package:easyinventory/controllers/supplier.controller.dart';
 import 'package:easyinventory/models/supplier.model.dart';
+import 'package:get/get.dart';
 
 class AddSupplierPage extends StatefulWidget {
-  final SupplierController controller;
+  AddSupplierPage({super.key});
 
-  const AddSupplierPage({super.key, required this.controller});
+  final SupplierController supplierController = Get.find<SupplierController>();
 
   @override
   State<AddSupplierPage> createState() => _AddSupplierPageState();
@@ -29,7 +30,7 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
         email: emailAddressController.text.trim(),
         address: addressController.text.trim(),
       );
-      widget.controller.addSupplier(newSupplier);
+      widget.supplierController.addSupplier(newSupplier);
       Navigator.pop(context, newSupplier);
     }
   }

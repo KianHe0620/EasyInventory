@@ -1,5 +1,3 @@
-// lib/models/smart_report.model.dart
-
 class SmartReportInput {
   final String field;
   final String demandMode;

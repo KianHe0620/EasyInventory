@@ -1,9 +1,4 @@
-import 'package:easyinventory/controllers/supplier.controller.dart';
 import 'package:flutter/material.dart';
-import 'package:easyinventory/controllers/item.controller.dart';
-import 'package:easyinventory/controllers/sell.controller.dart';
-import 'package:easyinventory/controllers/settings.controller.dart';
-import 'package:easyinventory/controllers/authentication.controller.dart';
 import 'package:easyinventory/views/dashboard.dart';
 import 'package:easyinventory/views/items/items.dart';
 import 'package:easyinventory/views/sell/sell.dart';
@@ -20,44 +15,13 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  late final AuthController authController;
-  late final ItemController itemController;
-  late final SellController sellController;
-  late final SettingsController settingsController;
-  late final SupplierController supplierController;
-
-  // Make pages lazy (build after controllers are ready)
-  late final List<Widget> _pages;
-
-  @override
-  void initState() {
-    super.initState();
-
-    // init controllers in the correct order
-    authController = AuthController();
-    itemController = ItemController();
-    sellController = SellController(itemController: itemController);
-    settingsController = SettingsController(authController: authController);
-    supplierController = SupplierController();
-
-    // now that controllers exist, create pages
-    _pages = [
-      DashboardPage(itemController: itemController, sellController: sellController),
-      ItemsPage(itemController: itemController, sellController: sellController, supplierController: supplierController,),
-      SellPage(itemController: itemController, sellController: sellController),
-      SettingsPage(settingsController: settingsController, itemController: itemController,),
-    ];
-  }
-
-  @override
-  void dispose() {
-    // dispose controllers that are ChangeNotifiers if they need disposing
-    itemController.dispose();
-    sellController.dispose();
-    settingsController.dispose();
-    // authController does not hold streams by default; dispose if you added listeners
-    super.dispose();
-  }
+  // Pages are simple views, controllers are obtained via Get.find() inside them
+  final List<Widget> _pages = [
+    DashboardPage(),
+    ItemsPage(),
+    SellPage(),
+    SettingsPage(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +33,7 @@ class _MainScreenState extends State<MainScreen> {
           setState(() {
             _currentIndex = index;
           });
-        }, itemController: itemController,
+        },
       ),
     );
   }

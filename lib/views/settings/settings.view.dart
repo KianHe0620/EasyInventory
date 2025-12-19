@@ -3,16 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:easyinventory/controllers/settings.controller.dart';
 import 'package:easyinventory/views/authentication/login.dart';
 import 'package:easyinventory/controllers/item.controller.dart';
+import 'package:get/get.dart';
 
 class SettingsPage extends StatefulWidget {
-  final SettingsController settingsController;
-  final ItemController itemController; 
 
-  const SettingsPage({
-    super.key,
-    required this.settingsController,
-    required this.itemController, 
-  });
+   SettingsPage({super.key,});
+
+  final SettingsController settingsController = Get.find<SettingsController>();
+  final ItemController itemController = Get.find<ItemController>(); 
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -146,9 +144,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => ManageFieldsPage(
-                        itemController: widget.itemController,
-                      ),
+                      builder: (_) => ManageFieldsPage(),
                     ),
                   );
                 },

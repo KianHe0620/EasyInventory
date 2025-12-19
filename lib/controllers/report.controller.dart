@@ -1,4 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import '../models/report.model.dart';
 import 'item.controller.dart';
 import 'sell.controller.dart';
@@ -129,7 +134,51 @@ class ReportController extends ChangeNotifier {
       totalItem: totalItem,
       totalQuantity: totalQty,
       totalValue: totalVal,
-      itemSummaries: itemSummaries, // ✅ changed field name
+      itemSummaries: itemSummaries,
     );
+  }
+
+  //PDF export
+  Future<File> exportToPdf({
+    required String title,
+    required String fileName,
+    required List<String> headers,
+    required List<List<dynamic>> rows,
+    List<String>? summaryLines,
+  }) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        build: (context) => [
+          pw.Text(title,
+              style: pw.TextStyle(
+                  fontSize: 20, fontWeight: pw.FontWeight.bold)),
+          pw.SizedBox(height: 10),
+          if (summaryLines != null)
+            ...summaryLines.map((e) => pw.Text(e)),
+          pw.SizedBox(height: 16),
+          pw.Table.fromTextArray(
+            headers: headers,
+            data: rows,
+            headerDecoration:
+                pw.BoxDecoration(color: PdfColors.grey300),
+          ),
+        ],
+      ),
+    );
+
+    Directory dir;
+
+    if (Platform.isAndroid) {
+      dir = Directory('/storage/emulated/0/Download');
+    } else {
+      dir = await getApplicationDocumentsDirectory();
+    }
+
+    final file = File('${dir.path}/$fileName.pdf');
+    await file.writeAsBytes(await pdf.save());
+
+    return file;
   }
 }

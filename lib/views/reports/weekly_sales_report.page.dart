@@ -1,42 +1,49 @@
+import 'package:easyinventory/controllers/report.controller.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../models/report.model.dart';
 
 class WeeklySalesReportPage extends StatelessWidget {
   final WeeklySalesReport report;
+  final ReportController reportController = Get.find<ReportController>();
 
-  const WeeklySalesReportPage({super.key, required this.report});
+  WeeklySalesReportPage({
+    super.key, 
+    required this.report
+    });
 
-  void _downloadReport(BuildContext context) {
-    // Simple mock: convert to CSV string
-    final csvBuffer = StringBuffer();
-    csvBuffer.writeln("Name,Price,Qty");
-    for (var item in report.soldItems) {
-      csvBuffer.writeln(
-        "${item["name"]},${item["price"]},${item["qty"]}",
-      );
-    }
-
-    // Show snackbar for now
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Report exported:\n${csvBuffer.toString()}"),
-        duration: const Duration(seconds: 3),
-      ),
+  void _downloadReport(BuildContext context) async {
+    final file = await reportController.exportToPdf(
+      title: 'Weekly Sales Report',
+      fileName:
+          'weekly_sales_${report.startDate.toIso8601String().substring(0, 10)}',
+      headers: ['Item Name', 'Price (RM)', 'Quantity Sold'],
+      rows: report.soldItems.map((e) => [
+        e['name'],
+        e['price']?.toStringAsFixed(2) ?? '-',
+        e['qty'],
+      ]).toList(),
+      summaryLines: [
+        'Period: ${report.startDate} - ${report.endDate}',
+        'Total Sales: ${report.totalSales}',
+        'Total Value (RM): ${report.totalValue.toStringAsFixed(2)}',
+      ],
     );
 
-    // TODO:
-    // - Save CSV locally using path_provider
-    // - Or share using share_plus
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('PDF saved at:\n${file.path}')),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: const Text("Weekly Sales Report"),
         actions: [
           IconButton(
-            icon: const Icon(Icons.download),
+            icon: const Icon(Icons.picture_as_pdf),
             tooltip: "Download Report",
             onPressed: () => _downloadReport(context),
           ),

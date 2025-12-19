@@ -1,4 +1,3 @@
-// lib/models/supplier.model.dart
 class Supplier {
   final String id;
   final String name;

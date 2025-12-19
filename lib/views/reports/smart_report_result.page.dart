@@ -1,14 +1,14 @@
-// lib/views/reports/smart_report_result.page.dart
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import '../../models/smart_report.model.dart';
+import 'package:get/get.dart';
+import 'package:easyinventory/controllers/smart_report.controller.dart';
 
 class SmartReportResultPage extends StatefulWidget {
   final SmartReportInput input;
   final List<SmartRecommendation> recommendations;
 
-  const SmartReportResultPage({
+  SmartReportResultPage({
     super.key,
     required this.input,
     required this.recommendations,
@@ -21,6 +21,7 @@ class SmartReportResultPage extends StatefulWidget {
 class _SmartReportResultPageState extends State<SmartReportResultPage> {
   // per-item local override (when user taps "Apply cap")
   final Map<String, int> _appliedOverrides = {};
+  final SmartReportController smartReportController = Get.find<SmartReportController>();
 
   void _applyCap(SmartRecommendation r) {
     setState(() {
@@ -34,22 +35,25 @@ class _SmartReportResultPageState extends State<SmartReportResultPage> {
     final recs = widget.recommendations;
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: const Text("Smart Report Result"),
         actions: [
           IconButton(
-            icon: const Icon(Icons.download),
-            onPressed: () {
-              final buf = StringBuffer();
-              buf.writeln('Item,Baseline(d),Boosted(d),TargetDays,Current,Target,Suggested,AdvisoryCap,HitCap');
-              for (final r in recs) {
-                final suggested = _appliedOverrides[r.itemId] ?? r.restockQty;
-                buf.writeln(
-                  '${r.name},${r.baselineDaily.toStringAsFixed(2)},${r.boostedDaily.toStringAsFixed(2)},${widget.input.targetDays ?? 30},${r.currentStock},${r.targetStock},$suggested,${r.advisoryCappedQty},${r.hitCap}'
-                );
-              }
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('CSV prepared (copy from message):\n${buf.toString().substring(0, min(800, buf.length))}')));
+            tooltip: 'Export PDF',
+            icon: const Icon(Icons.picture_as_pdf),
+            onPressed: () async {
+              final file = await smartReportController.exportSmartReportPdf(
+                input: widget.input,
+                recs: widget.recommendations,
+              );
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('PDF saved in Downloads:\n${file.path}'),
+                ),
+              );
             },
-          )
+          ),
         ],
       ),
       body: recs.isEmpty

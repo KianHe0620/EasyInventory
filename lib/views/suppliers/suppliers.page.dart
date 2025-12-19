@@ -1,8 +1,7 @@
-// lib/views/suppliers/suppliers.dart
 import 'package:flutter/material.dart';
 import 'package:easyinventory/controllers/supplier.controller.dart';
-import 'package:easyinventory/views/suppliers/addSupplier.dart';
-import 'package:easyinventory/views/suppliers/editSupplier.dart';
+import 'package:easyinventory/views/suppliers/add_supplier.page.dart';
+import 'package:easyinventory/views/suppliers/edit_supplier.page.dart';
 import 'package:easyinventory/views/widgets/app_bar.global.dart';
 import 'package:easyinventory/views/widgets/floating_add_btn.global.dart';
 import 'package:easyinventory/views/widgets/search.global.dart';
@@ -82,7 +81,7 @@ class _SuppliersPageState extends State<SuppliersPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => AddSupplierPage(controller: _controller),
+              builder: (_) => AddSupplierPage(),
             ),
           );
           // no need for .then -> controller notifies and listener will rebuild
@@ -163,7 +162,7 @@ class _SuppliersPageState extends State<SuppliersPage> {
                         context,
                         MaterialPageRoute(
                           builder: (_) =>
-                              EditSupplierPage(controller: _controller, supplier: supplier),
+                              EditSupplierPage(supplier: supplier),
                         ),
                       );
                     }

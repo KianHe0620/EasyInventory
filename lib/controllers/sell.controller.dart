@@ -1,4 +1,3 @@
-// lib/controllers/sell.controller.dart
 import 'dart:async';
 import 'package:easyinventory/controllers/item.controller.dart';
 import 'package:flutter/foundation.dart';

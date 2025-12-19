@@ -1,4 +1,3 @@
-// lib/models/settings.model.dart
 class Settings {
   final bool notificationsEnabled;
   final bool notificationsRequested; // track if permission was requested

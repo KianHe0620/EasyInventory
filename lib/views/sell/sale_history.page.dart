@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../controllers/sell.controller.dart';
 import '../../controllers/item.controller.dart';
 import '../../models/sell.model.dart';
 
 class SaleHistoryPage extends StatefulWidget {
-  final SellController sellController;
-  final ItemController itemController;
+  final SellController sellController = Get.find<SellController>();
+  final ItemController itemController = Get.find<ItemController>();
 
-  const SaleHistoryPage({
-    super.key,
-    required this.sellController,
-    required this.itemController,
-  });
+  SaleHistoryPage({super.key});
 
   @override
   State<SaleHistoryPage> createState() => _SaleHistoryPageState();

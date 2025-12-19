@@ -3,14 +3,14 @@ import 'package:easyinventory/views/widgets/app_bar.global.dart';
 import 'package:easyinventory/views/widgets/text_form.global.dart';
 import 'package:easyinventory/controllers/supplier.controller.dart';
 import 'package:easyinventory/models/supplier.model.dart';
+import 'package:get/get.dart';
 
 class EditSupplierPage extends StatefulWidget {
-  final SupplierController controller;
+  final SupplierController supplierController = Get.find<SupplierController>();
   final Supplier supplier;
 
-  const EditSupplierPage({
+  EditSupplierPage({
     super.key,
-    required this.controller,
     required this.supplier,
   });
 
@@ -53,7 +53,7 @@ class _EditSupplierPageState extends State<EditSupplierPage> {
         address: addressController.text.trim(),
       );
 
-      widget.controller.updateSupplier(widget.supplier.id, updated);
+      widget.supplierController.updateSupplier(widget.supplier.id, updated);
 
       Navigator.pop(context, updated); // ✅ return updated supplier
     }

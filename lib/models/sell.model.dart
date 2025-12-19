@@ -1,4 +1,3 @@
-// lib/models/sell.model.dart
 class Sale {
   final String id;
   final DateTime date;

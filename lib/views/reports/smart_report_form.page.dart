@@ -2,10 +2,11 @@ import 'package:easyinventory/views/reports/smart_report_result.page.dart';
 import 'package:flutter/material.dart';
 import 'package:easyinventory/controllers/smart_report.controller.dart';
 import 'package:easyinventory/models/smart_report.model.dart';
+import 'package:get/get.dart';
 
 class SmartReportFormPage extends StatefulWidget {
-  final SmartReportController controller;
-  const SmartReportFormPage({super.key, required this.controller});
+  final SmartReportController smartReportController = Get.find<SmartReportController>();
+  SmartReportFormPage({super.key});
 
   @override
   State<SmartReportFormPage> createState() => _SmartReportFormPageState();
@@ -28,7 +29,7 @@ class _SmartReportFormPageState extends State<SmartReportFormPage> {
   @override
   void initState() {
     super.initState();
-    final setFields = widget.controller.itemController.getFields();
+    final setFields = widget.smartReportController.itemController.getFields();
     fields = <String>['All']..addAll(setFields.toList()..sort());
     selectedField = fields.isNotEmpty ? fields.first : 'All';
   }
@@ -110,7 +111,7 @@ class _SmartReportFormPageState extends State<SmartReportFormPage> {
       enforceCap: enforceCap,
     );
 
-    final recs = widget.controller.generate(input);
+    final recs = widget.smartReportController.generate(input);
 
     Navigator.push(
       context,
@@ -127,6 +128,7 @@ class _SmartReportFormPageState extends State<SmartReportFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: const Text("Smart Report"),
         actions: [
           IconButton(

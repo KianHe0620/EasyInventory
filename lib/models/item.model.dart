@@ -1,4 +1,3 @@
-// lib/models/item.model.dart
 class Item {
   final String id;
   final String name;

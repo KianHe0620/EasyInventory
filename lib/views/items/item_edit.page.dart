@@ -1,8 +1,8 @@
-// lib/views/items/item_edit.page.dart
 import 'dart:io';
 import 'package:easyinventory/views/utils/barcode_scanner.utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../controllers/item.controller.dart';
 import '../../controllers/supplier.controller.dart';
@@ -11,15 +11,13 @@ import '../widgets/quantity_box.global.dart';
 import '../widgets/item_widget.dart';
 
 class ItemEditPage extends StatefulWidget {
-  final ItemController controller;
-  final SupplierController supplierController;
+  final ItemController itemController = Get.find<ItemController>();
+  final SupplierController supplierController = Get.find<SupplierController>();
   final Item? item;
   final int? index;
 
-  const ItemEditPage({
+  ItemEditPage({
     super.key,
-    required this.controller,
-    required this.supplierController,
     this.item,
     this.index,
   });
@@ -70,7 +68,7 @@ class _ItemEditPageState extends State<ItemEditPage> {
       supplierId = widget.supplierController.filteredSuppliers.isNotEmpty ? widget.supplierController.filteredSuppliers.first.id : null;
     }
 
-    final fields = widget.controller.getFields();
+    final fields = widget.itemController.getFields();
     if (item != null && item.field.isNotEmpty && fields.contains(item.field)) {
       field = item.field;
     } else {
@@ -78,7 +76,7 @@ class _ItemEditPageState extends State<ItemEditPage> {
     }
 
     // Listen to controller so we can refresh preview when editingImagePaths change
-    widget.controller.addListener(_onControllerChanged);
+    widget.itemController.addListener(_onControllerChanged);
   }
 
   @override
@@ -87,7 +85,7 @@ class _ItemEditPageState extends State<ItemEditPage> {
     purchaseCtrl.dispose();
     sellingCtrl.dispose();
     barcodeCtrl.dispose();
-    widget.controller.removeListener(_onControllerChanged);
+    widget.itemController.removeListener(_onControllerChanged);
     super.dispose();
   }
 
@@ -126,7 +124,7 @@ class _ItemEditPageState extends State<ItemEditPage> {
 
       // notify controller about the temp editing path so other parts of UI see it
       if (widget.item != null) {
-        widget.controller.setEditingImagePath(widget.item!.id, _pickedImageFile!.path);
+        widget.itemController.setEditingImagePath(widget.item!.id, _pickedImageFile!.path);
       }
     } on PlatformException catch (e) {
       if (mounted) {
@@ -157,7 +155,7 @@ class _ItemEditPageState extends State<ItemEditPage> {
         _pickedImageFile = null;
       });
       if (widget.item != null) {
-        widget.controller.setEditingImagePath(widget.item!.id, null);
+        widget.itemController.setEditingImagePath(widget.item!.id, null);
       }
     }
   }
@@ -205,7 +203,7 @@ class _ItemEditPageState extends State<ItemEditPage> {
   DecorationImage? _buildDecorationImage() {
     final id = widget.item?.id;
     if (id == null) return null;
-    final effective = widget.controller.getEffectiveImagePath(id);
+    final effective = widget.itemController.getEffectiveImagePath(id);
     if (effective == null || effective.isEmpty) return null;
 
     final file = File(effective);
@@ -218,8 +216,8 @@ class _ItemEditPageState extends State<ItemEditPage> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = widget.controller;
-    final availableFields = widget.controller.getFields().toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    final controller = widget.itemController;
+    final availableFields = widget.itemController.getFields().toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
     final previewImage = _buildDecorationImage();
 
     return Scaffold(
@@ -238,7 +236,7 @@ class _ItemEditPageState extends State<ItemEditPage> {
               }
               final selectedSupplier = widget.supplierController.getSupplierById(supplierId ?? "");
               // get effective image path from controller (could be null => store empty string)
-              final effectivePath = widget.controller.getEffectiveImagePath(widget.item!.id) ?? '';
+              final effectivePath = widget.itemController.getEffectiveImagePath(widget.item!.id) ?? '';
 
               final updatedItem = Item(
                 id: widget.item!.id,
@@ -282,7 +280,7 @@ class _ItemEditPageState extends State<ItemEditPage> {
                   ),
                 ),
                 // show delete overlay only if we have an effective image (either local picked or saved)
-                if ((widget.item != null && widget.controller.getEffectiveImagePath(widget.item!.id)?.isNotEmpty == true))
+                if ((widget.item != null && widget.itemController.getEffectiveImagePath(widget.item!.id)?.isNotEmpty == true))
                   Positioned(
                     top: 8,
                     right: 8,

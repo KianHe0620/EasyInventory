@@ -1,21 +1,19 @@
 import 'package:easyinventory/controllers/smart_report.controller.dart';
 import 'package:easyinventory/views/reports/reports.page.dart';
-import 'package:easyinventory/views/suppliers/suppliers.dart';
+import 'package:easyinventory/views/suppliers/suppliers.page.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../controllers/sell.controller.dart';
 import '../../controllers/item.controller.dart';
 import '../../controllers/report.controller.dart';
 
 class DashboardPage extends StatelessWidget {
-  final SellController sellController;
-  final ItemController itemController;
 
-  const DashboardPage({
-    super.key,
-    required this.sellController,
-    required this.itemController,
-  });
+  DashboardPage({super.key,});
+
+  final SellController sellController = Get.find<SellController>();
+  final ItemController itemController = Get.find<ItemController>();
 
   @override
   Widget build(BuildContext context) {

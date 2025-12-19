@@ -1,18 +1,17 @@
-// lib/controllers/auth.controller.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    // scopes can be adjusted; optional
-    scopes: <String>['email'],
-  );
+  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
 
   // Email/password sign in
   Future<String?> signIn(String email, String password) async {
     try {
-      await _auth.signInWithEmailAndPassword(email: email.trim(), password: password);
+      await _auth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
       return null;
     } on FirebaseAuthException catch (e) {
       return _mapAuthException(e);
@@ -24,7 +23,10 @@ class AuthController {
   // Email/password register
   Future<String?> register(String email, String password) async {
     try {
-      await _auth.createUserWithEmailAndPassword(email: email.trim(), password: password);
+      await _auth.createUserWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
       return null;
     } on FirebaseAuthException catch (e) {
       return _mapAuthException(e);
@@ -36,21 +38,17 @@ class AuthController {
   // Google Sign-In
   Future<String?> signInWithGoogle() async {
     try {
-      // Trigger the Google Sign-In flow
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        return 'Cancelled by user';
-      }
+      final GoogleSignInAccount? googleUser =
+          await _googleSignIn.signIn();
+      if (googleUser == null) return 'Cancelled by user';
 
-      // Obtain auth details from the request
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final googleAuth = await googleUser.authentication;
 
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // Sign in to Firebase with the Google credential
       await _auth.signInWithCredential(credential);
       return null;
     } on FirebaseAuthException catch (e) {
@@ -60,7 +58,7 @@ class AuthController {
     }
   }
 
-  // Password reset
+  // ✅ REAL forgot password
   Future<String?> sendPasswordReset(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email.trim());
@@ -72,21 +70,14 @@ class AuthController {
     }
   }
 
-  // Sign out from both Firebase and Google
   Future<void> signOut() async {
+    await _auth.signOut();
     try {
-      // sign out from Firebase
-      await _auth.signOut();
-      // disconnect GoogleSignIn too
-      try {
-        await _googleSignIn.signOut();
-      } catch (_) {}
+      await _googleSignIn.signOut();
     } catch (_) {}
   }
 
-  // Helpers
   User? get currentUser => _auth.currentUser;
-  Stream<User?> authStateChanges() => _auth.authStateChanges();
 
   String _mapAuthException(FirebaseAuthException e) {
     switch (e.code) {
@@ -102,10 +93,8 @@ class AuthController {
         return 'This email is already in use.';
       case 'weak-password':
         return 'Password too weak (min 6 chars).';
-      case 'account-exists-with-different-credential':
-        return 'Account exists with different sign-in method.';
       default:
-        return e.message ?? 'Authentication error: ${e.code}';
+        return e.message ?? 'Authentication error.';
     }
   }
 }

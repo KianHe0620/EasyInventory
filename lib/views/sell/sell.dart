@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../controllers/item.controller.dart';
 import '../../controllers/sell.controller.dart';
 import '../sell/sale_history.page.dart';
@@ -8,14 +9,11 @@ import 'package:easyinventory/views/utils/barcode_scanner.utils.dart';
 import '../../models/item.model.dart';
 
 class SellPage extends StatefulWidget {
-  final ItemController itemController;
-  final SellController sellController;
 
-  const SellPage({
-    super.key,
-    required this.itemController,
-    required this.sellController,
-  });
+  SellPage({super.key,});
+
+  final SellController sellController = Get.find<SellController>();
+  final ItemController itemController = Get.find<ItemController>();
 
   @override
   State<SellPage> createState() => _SellPageState();
@@ -121,12 +119,10 @@ class _SellPageState extends State<SellPage> {
           IconButton(
             icon: const Icon(Icons.history),
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (_) =>
-                SaleHistoryPage(
-                  sellController: sellController,
-                  itemController: widget.itemController,
-                ),
-              ));
+              Navigator.push(
+                context, 
+                MaterialPageRoute(builder: (_) => SaleHistoryPage(),)
+              );
             },
           ),
         ],

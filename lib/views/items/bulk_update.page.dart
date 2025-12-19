@@ -1,17 +1,16 @@
-// lib/views/items/bulk_update.page.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../controllers/item.controller.dart';
 import '../../models/item.model.dart';
 
 class BulkUpdatePage extends StatefulWidget {
   final List<Item> items;
-  final ItemController itemController;
+  final ItemController itemController = Get.find<ItemController>();
 
-  const BulkUpdatePage({
+  BulkUpdatePage({
     super.key,
     required this.items,
-    required this.itemController,
   });
 
   @override

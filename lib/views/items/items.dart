@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:get/get.dart';
 import 'package:easyinventory/views/utils/barcode_scanner.utils.dart';
 import 'package:easyinventory/views/widgets/item_widget.dart';
 import 'package:flutter/material.dart';
@@ -12,16 +13,11 @@ import 'filter_sidebar.dart';
 import 'bulk_update.page.dart';
 
 class ItemsPage extends StatefulWidget {
-  final ItemController itemController;
-  final SellController sellController;
-  final SupplierController supplierController;
+  ItemsPage({super.key,});
 
-  const ItemsPage({
-    super.key,
-    required this.itemController,
-    required this.sellController,
-    required this.supplierController,
-  });
+  final ItemController itemController = Get.find<ItemController>();
+  final SellController sellController = Get.find<SellController>();
+  final SupplierController supplierController = Get.find<SupplierController>();
 
   @override
   State<ItemsPage> createState() => _ItemsPageState();
@@ -237,8 +233,6 @@ class _ItemsPageState extends State<ItemsPage> {
                       context,
                       MaterialPageRoute(
                         builder: (_) => ItemEditPage(
-                          controller: itemCtrl,
-                          supplierController: widget.supplierController,
                           item: item,
                           index: originalIndex,
                         ),
@@ -262,7 +256,7 @@ class _ItemsPageState extends State<ItemsPage> {
                   return;
                 }
                 final selectedItems = itemCtrl.items.where((it) => itemCtrl.selectedIds.contains(it.id)).toList();
-                Navigator.push(context, MaterialPageRoute(builder: (_) => BulkUpdatePage(items: selectedItems, itemController: itemCtrl))).then((_) => setState(() {}));
+                Navigator.push(context, MaterialPageRoute(builder: (_) => BulkUpdatePage(items: selectedItems))).then((_) => setState(() {}));
               },
               onAddToSell: () {
                 if (itemCtrl.selectedIds.isEmpty) {
@@ -283,7 +277,7 @@ class _ItemsPageState extends State<ItemsPage> {
       floatingActionButton: !itemCtrl.selectionMode
           ? FloatingAddBtn(
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => ItemAddPage(controller: itemCtrl, supplierController: widget.supplierController))).then((newItem) {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => ItemAddPage())).then((newItem) {
                   if (newItem != null) setState(() {});
                 });
               },

@@ -1,9 +1,9 @@
-// lib/views/items/item_add.page.dart
 import 'dart:io';
 import 'package:easyinventory/views/utils/barcode_scanner.utils.dart';
 import 'package:easyinventory/views/widgets/item_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../controllers/item.controller.dart';
 import '../../controllers/supplier.controller.dart';
@@ -11,14 +11,10 @@ import '../../models/item.model.dart';
 import '../widgets/quantity_box.global.dart';
 
 class ItemAddPage extends StatefulWidget {
-  final ItemController controller;
-  final SupplierController supplierController;
+  final ItemController itemController = Get.find<ItemController>();
+  final SupplierController supplierController = Get.find<SupplierController>();
 
-  const ItemAddPage({
-    super.key,
-    required this.controller,
-    required this.supplierController,
-  });
+  ItemAddPage({super.key,});
 
   @override
   State<ItemAddPage> createState() => _ItemAddPageState();
@@ -52,7 +48,7 @@ class _ItemAddPageState extends State<ItemAddPage> {
         ? widget.supplierController.filteredSuppliers.first.id
         : null;
 
-    final fields = widget.controller.getFields();
+    final fields = widget.itemController.getFields();
     field = fields.isNotEmpty ? fields.first : 'Uncategorized';
   }
 
@@ -160,8 +156,8 @@ class _ItemAddPageState extends State<ItemAddPage> {
 
   @override
   Widget build(BuildContext context) {
-    final controller = widget.controller;
-    final availableFields = widget.controller.getFields().toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    final controller = widget.itemController;
+    final availableFields = widget.itemController.getFields().toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
 
     // build preview from picked image (local) — for Add page there's no saved item yet
     final DecorationImage? previewImage = (_imageFile != null)

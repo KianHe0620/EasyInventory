@@ -1,4 +1,3 @@
-// lib/views/utils/barcode_scanner.page.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 

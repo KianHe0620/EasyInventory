@@ -1,8 +1,7 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/item.model.dart';
-import '../utils/decimal_formatter.utils.dart'; // if you want priceField here
+import '../utils/decimal_formatter.utils.dart';
 
 // ---------------- SquareCheckbox ----------------
 class SquareCheckbox extends StatelessWidget {

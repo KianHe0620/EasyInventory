@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import '../../controllers/item.controller.dart';
 
 class BtmNavigationBar extends StatelessWidget {
-  const BtmNavigationBar({
+  BtmNavigationBar({
     super.key,
     required this.selectedIndex,
     required this.onDestinationSelected,
-    required this.itemController, // pass controller from parent
   });
 
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
-  final ItemController itemController;
+  final ItemController itemController = Get.find<ItemController>();
 
   @override
   Widget build(BuildContext context) {

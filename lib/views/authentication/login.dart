@@ -1,4 +1,3 @@
-// lib/views/authentication/login.dart
 import 'package:easyinventory/controllers/authentication.controller.dart';
 import 'package:easyinventory/views/authentication/register.dart';
 import 'package:easyinventory/views/mainScreen.dart';
@@ -22,7 +21,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
 
   void _showMessage(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
   }
 
   Future<void> _login() async {
@@ -39,7 +39,6 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = false);
 
     if (err == null) {
-      // Success — replace with MainScreen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const MainScreen()),
@@ -49,22 +48,56 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // ✅ REAL, PRODUCTION forgot password
   Future<void> _forgotPassword() async {
-    final email = emailController.text.trim();
-    if (email.isEmpty) {
-      _showMessage("Enter your email to reset password.");
-      return;
-    }
+    final TextEditingController resetEmailController =
+        TextEditingController(text: emailController.text);
 
-    setState(() => _loading = true);
-    final err = await _authController.sendPasswordReset(email);
-    setState(() => _loading = false);
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Reset Password'),
+        content: TextField(
+          controller: resetEmailController,
+          keyboardType: TextInputType.emailAddress,
+          decoration: const InputDecoration(
+            labelText: 'Email Address',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final email = resetEmailController.text.trim();
+              if (email.isEmpty) {
+                _showMessage('Please enter your email.');
+                return;
+              }
 
-    if (err == null) {
-      _showMessage("Password reset email sent. Check your inbox.");
-    } else {
-      _showMessage(err);
-    }
+              Navigator.pop(context);
+              setState(() => _loading = true);
+
+              final err =
+                  await _authController.sendPasswordReset(email);
+
+              setState(() => _loading = false);
+
+              if (err == null) {
+                _showMessage(
+                  'Password reset email sent. Check your inbox.',
+                );
+              } else {
+                _showMessage(err);
+              }
+            },
+            child: const Text('Send'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -79,134 +112,103 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(15.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-                const Text('Login',
-                    style:
-                        TextStyle(fontSize: 35, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 30),
-                Column(
-                  children: [
-                    //Email Input
-                    TextForm(
-                      controller: emailController,
-                      text: 'Email Address',
-                      textInputType: TextInputType.emailAddress,
-                      obscure: false,
-                    ),
-                    const SizedBox(height: 15),
+          padding: const EdgeInsets.all(15),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Login',
+                style:
+                    TextStyle(fontSize: 35, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 30),
 
-                    //Password Input
-                    TextForm(
-                      controller: passwordController,
-                      text: 'Password',
-                      textInputType: TextInputType.text,
-                      obscure: true,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
+              TextForm(
+                controller: emailController,
+                text: 'Email Address',
+                textInputType: TextInputType.emailAddress,
+                obscure: false,
+              ),
+              const SizedBox(height: 15),
 
-                //Forgot Password
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                      onPressed: _forgotPassword,
-                      child: Text(
-                        "Forgot Password?",
-                        style: TextStyle(color: const Color(0xFF0A84D0)),
-                      )),
-                ),
-                const SizedBox(height: 8),
+              TextForm(
+                controller: passwordController,
+                text: 'Password',
+                textInputType: TextInputType.text,
+                obscure: true,
+              ),
 
-                //Login Button
-                _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : ButtonGlobal(
-                        boxColor: const Color(0xFF0A84D0),
-                        text: 'Log In',
-                        textColor: Colors.white,
-                        width: 0,
-                        onTap: _login,
-                      ),
-
-                //Divider Line
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Row(
-                    children: [
-                      Expanded(
-                          child: Divider(
-                              color: Colors.grey, thickness: 0.8)),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text(
-                          'Or',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                          child: Divider(
-                              color: Colors.grey, thickness: 0.8))
-                    ],
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: _forgotPassword,
+                  child: const Text(
+                    "Forgot Password?",
+                    style: TextStyle(color: Color(0xFF0A84D0)),
                   ),
                 ),
+              ),
 
-                //Google Login Button (placeholder)
-                ButtonGlobal(
-                  boxColor: Colors.white,
-                  text: 'Login with Google',
-                  textColor: Colors.black,
-                  width: 1,
-                  onTap: () async {
-                    setState(() => _loading = true);
-                    final err = await _authController.signInWithGoogle();
-                    setState(() => _loading = false);
+              _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ButtonGlobal(
+                      boxColor: const Color(0xFF0A84D0),
+                      text: 'Log In',
+                      textColor: Colors.white,
+                      width: 0,
+                      onTap: _login,
+                    ),
 
-                    if (err == null) {
-                      // success -> go to main screen
-                      Navigator.pushReplacement(
+              const SizedBox(height: 20),
+
+              ButtonGlobal(
+                boxColor: Colors.white,
+                text: 'Login with Google',
+                textColor: Colors.black,
+                width: 1,
+                onTap: () async {
+                  setState(() => _loading = true);
+                  final err =
+                      await _authController.signInWithGoogle();
+                  setState(() => _loading = false);
+
+                  if (err == null) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const MainScreen()),
+                    );
+                  } else {
+                    _showMessage(err);
+                  }
+                },
+              ),
+
+              const SizedBox(height: 30),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('Register a new account?'),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const MainScreen()),
+                        MaterialPageRoute(
+                            builder: (_) => RegisterScreen()),
                       );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
-                    }
-                  },
-                ),
-                const SizedBox(height: 30),
-
-                //Register Text Button
-                Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('Register a new account?'),
-                      TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => RegisterScreen()),
-                            );
-                          },
-                          child: Text(
-                            'Register',
-                            style: TextStyle(
-                              color: const Color(0xFF0A84D0),
-                              fontSize: 18,
-                            ),
-                          )),
-                    ])
-              ],
-            ),
+                    },
+                    child: const Text(
+                      'Register',
+                      style: TextStyle(
+                        color: Color(0xFF0A84D0),
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

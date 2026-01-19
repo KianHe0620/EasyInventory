@@ -5,7 +5,7 @@ import 'package:easyinventory/controllers/sell.controller.dart';
 import 'package:easyinventory/controllers/settings.controller.dart';
 import 'package:easyinventory/controllers/smart_report.controller.dart';
 import 'package:easyinventory/controllers/supplier.controller.dart';
-import 'package:easyinventory/views/authentication/login.dart';
+import 'package:easyinventory/views/authentication/splash.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -17,7 +17,7 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // 🔹 Register controllers (Dependency Injection)
+  //Register controllers
   Get.put(AuthController());
   Get.put(ItemController());
   Get.put(
@@ -51,35 +51,36 @@ Future<void> main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
 
-        // ✅ Set primary color (controls dropdown, radio, switch)
+        //Set primary color
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF0A84D0), // your blue
+          seedColor: const Color(0xFF0A84D0),
           primary: const Color(0xFF0A84D0),
         ),
 
-        // Optional fine-tuning
+        //Switch Button Theme
         switchTheme: SwitchThemeData(
-          thumbColor: MaterialStateProperty.all(
+          thumbColor: WidgetStateProperty.all(
             const Color(0xFF0A84D0),
           ),
-          trackColor: MaterialStateProperty.all(
+          trackColor: WidgetStateProperty.all(
             const Color(0x330A84D0),
           ),
         ),
 
+        //Radio Button Theme
         radioTheme: RadioThemeData(
-          fillColor: MaterialStateProperty.all(
+          fillColor: WidgetStateProperty.all(
             const Color(0xFF0A84D0),
           ),
         ),
 
+        //Dropdown Menu Theme
         dropdownMenuTheme: DropdownMenuThemeData(
           inputDecorationTheme: const InputDecorationTheme(
             focusedBorder: OutlineInputBorder(
@@ -90,7 +91,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: LoginScreen(),
+      home: SplashScreen(),
     );
   }
 }

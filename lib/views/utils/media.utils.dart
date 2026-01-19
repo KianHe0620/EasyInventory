@@ -32,7 +32,6 @@ Future<String?> uploadImageForCurrentUser(File file) async {
       .child('images')
       .child(filename);
 
-  final task = await ref.putFile(file);
   final url = await ref.getDownloadURL();
   return url;
 }

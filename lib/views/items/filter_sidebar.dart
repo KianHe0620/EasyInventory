@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class FilterSidebar extends StatefulWidget {
   final List<String> fields;
@@ -42,7 +43,7 @@ class _FilterSidebarState extends State<FilterSidebar> {
     return Drawer(
       child: SafeArea(
         child: Container(
-          color: Colors.white, // ✅ WHITE background
+          color: Colors.white,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -70,7 +71,7 @@ class _FilterSidebarState extends State<FilterSidebar> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: DropdownButtonFormField<String>(
-                  value: selectedField,
+                  initialValue: selectedField,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     isDense: true,
@@ -99,30 +100,31 @@ class _FilterSidebarState extends State<FilterSidebar> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
-              RadioListTile<String>(
-                title: const Text("Name"),
-                value: "Name",
+              RadioGroup<String>(
                 groupValue: selectedSort,
-                onChanged: (val) =>
-                    setState(() => selectedSort = val),
+                onChanged: (val) {
+                  if (val == null) return;
+                  setState(() => selectedSort = val);
+                },
+                child: Column(
+                  children: const [
+                    RadioListTile<String>(
+                      title: Text("Name"),
+                      value: "Name",
+                    ),
+                    RadioListTile<String>(
+                      title: Text("Quantity"),
+                      value: "Quantity",
+                    ),
+                    RadioListTile<String>(
+                      title: Text("Price"),
+                      value: "Price",
+                    ),
+                  ],
+                ),
               ),
-              RadioListTile<String>(
-                title: const Text("Price"),
-                value: "Price",
-                groupValue: selectedSort,
-                onChanged: (val) =>
-                    setState(() => selectedSort = val),
-              ),
-              RadioListTile<String>(
-                title: const Text("Quantity"),
-                value: "Quantity",
-                groupValue: selectedSort,
-                onChanged: (val) =>
-                    setState(() => selectedSort = val),
-              ),
-
               const Divider(),
-
+              
               // ===== Order =====
               const Padding(
                 padding: EdgeInsets.all(12),
@@ -160,7 +162,7 @@ class _FilterSidebarState extends State<FilterSidebar> {
                         ),
                         onPressed: () {
                           widget.onClear();
-                          Navigator.pop(context);
+                          Get.back();
                         },
                         child: const Text("Clear"),
                       ),
@@ -182,7 +184,7 @@ class _FilterSidebarState extends State<FilterSidebar> {
                             selectedSort,
                             ascending,
                           );
-                          Navigator.pop(context);
+                          Get.back();
                         },
                         child: const Text("Apply"),
                       ),

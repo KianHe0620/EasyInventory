@@ -72,14 +72,11 @@ class SupplierController extends ChangeNotifier {
       _applyFilter(searchController.text);
       notifyListeners();
     }, onError: (err) {
-      // optionally log in debug
       if (kDebugMode) print('SupplierController snapshot error: $err');
     });
   }
 
-  // ---------------------------
   // SEARCHING / FILTERING
-  // ---------------------------
   void _onSearchChanged() {
     _applyFilter(searchController.text);
     notifyListeners();
@@ -102,12 +99,9 @@ class SupplierController extends ChangeNotifier {
 
   void clearSearch() {
     searchController.clear();
-    // listener will update
   }
 
-  // ---------------------------
   // SELECTION MODE
-  // ---------------------------
   void toggleSelectionMode() {
     isSelectionMode = !isSelectionMode;
     if (!isSelectionMode) selectedSuppliers.clear();
@@ -125,9 +119,7 @@ class SupplierController extends ChangeNotifier {
 
   bool isSelected(String supplierId) => selectedSuppliers.contains(supplierId);
 
-  // ---------------------------
-  // CRUD (uses Firestore)
-  // ---------------------------
+  // CRUD
   Future<void> addSupplier(Supplier s) async {
     final u = _auth.currentUser;
     if (u == null) throw Exception('Not signed in');
@@ -135,14 +127,12 @@ class SupplierController extends ChangeNotifier {
     final id = s.id.isNotEmpty ? s.id : col.doc().id;
     final toSave = s.copyWith(id: id).toMap();
     await col.doc(id).set(toSave);
-    // listener will pick up changes and update lists
   }
 
   Future<void> updateSupplier(String id, Supplier updated) async {
     final u = _auth.currentUser;
     if (u == null) throw Exception('Not signed in');
     await _col(u.uid).doc(id).set(updated.copyWith(id: id).toMap());
-    // listener will update
   }
 
   Future<void> removeSelectedSuppliers() async {
@@ -157,14 +147,12 @@ class SupplierController extends ChangeNotifier {
     await batch.commit();
     selectedSuppliers.clear();
     isSelectionMode = false;
-    // listener will update lists
   }
 
   Future<void> deleteSupplier(String id) async {
     final u = _auth.currentUser;
     if (u == null) throw Exception('Not signed in');
     await _col(u.uid).doc(id).delete();
-    // listener will update
   }
 
   Supplier? getSupplierById(String id) {
@@ -175,12 +163,10 @@ class SupplierController extends ChangeNotifier {
     }
   }
 
-  // expose a snapshot of all suppliers (read-only)
+  // expose a snapshot of all suppliers
   List<Supplier> get allSuppliers => List.unmodifiable(_suppliers);
 
-  // ---------------------------
   // cleanup
-  // ---------------------------
   @override
   void dispose() {
     _sub?.cancel();

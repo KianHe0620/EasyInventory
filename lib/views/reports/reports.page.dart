@@ -5,6 +5,7 @@ import 'package:easyinventory/views/reports/inventory_value_report.page.dart';
 import 'package:easyinventory/views/reports/low_stock_report.page.dart';
 import 'package:easyinventory/views/reports/weekly_sales_report.page.dart';
 import 'package:easyinventory/views/reports/smart_report_form.page.dart';
+import 'package:get/get.dart';
 
 class ReportPage extends StatelessWidget {
   final ReportController reportController;
@@ -32,52 +33,32 @@ class ReportPage extends StatelessWidget {
                 DateTime.now().subtract(const Duration(days: 7)),
                 DateTime.now(),
               );
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => WeeklySalesReportPage(report: report),
-                ),
-              );
+              Get.to(() => WeeklySalesReportPage(report: report));
             },
           ),
           ListTile(
             title: const Text("Inventory Value Report"),
             onTap: () {
               final report = reportController.generateInventoryValueReport();
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => InventoryValueReportPage(report: report),
-                ),
-              );
+              Get.to(() => InventoryValueReportPage(report: report));
             },
           ),
           ListTile(
             title: const Text("Low Stock Report"),
             onTap: () {
               final report = reportController.generateLowStockReport();
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => LowStockReportPage(report: report),
-                ),
-              );
+              Get.to(() => LowStockReportPage(report: report));
             },
           ),
         ],
       ),
 
-      // ✅ Smart Report FAB uses SmartReportController
+      //Smart Report Button
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.auto_graph),
         label: const Text("Smart Report"),
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => SmartReportFormPage(),
-            ),
-          );
+          Get.to(() => SmartReportFormPage());
         },
       ),
     );

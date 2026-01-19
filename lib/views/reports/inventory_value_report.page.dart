@@ -35,9 +35,7 @@ class InventoryValueReportPage extends StatelessWidget {
       ],
     );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('PDF saved in Downloads:\n${file.path}')),
-    );
+    Get.snackbar('Success', 'PDF saved in Downloads:\n${file.path}');
   }
 
   @override

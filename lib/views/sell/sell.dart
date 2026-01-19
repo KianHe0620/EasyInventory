@@ -44,27 +44,23 @@ class _SellPageState extends State<SellPage> {
   }
 
   Future<void> _scanAndAddToCart() async {
-    final result = await Navigator.push<String?>(
-      context,
-      MaterialPageRoute(builder: (_) => const BarcodeScannerPage()),
-    );
+    final result = await Get.to(()=>BarcodeScannerPage());
 
     if (result == null || result.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Barcode scan cancelled')));
+      Get.snackbar('No Barcode', 'Barcode scan cancelled');
       return;
     }
 
     final matched = widget.itemController.items.where((it) => it.barcode == result).toList();
     if (matched.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No item found for barcode: $result')));
+      Get.snackbar('Missing Item', 'No item found for barcode: $result');
       return;
     }
 
     final item = matched.first;
     final currentQty = sellController.getQuantity(item.id);
     sellController.setQuantity(item.id, currentQty + 1);
-
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added "${item.name}" x1 to cart')));
+    Get.snackbar('Success', 'Added "${item.name}" x1 to cart');
     setState(() {});
   }
 
@@ -119,10 +115,7 @@ class _SellPageState extends State<SellPage> {
           IconButton(
             icon: const Icon(Icons.history),
             onPressed: () {
-              Navigator.push(
-                context, 
-                MaterialPageRoute(builder: (_) => SaleHistoryPage(),)
-              );
+              Get.to(SaleHistoryPage());
             },
           ),
         ],
@@ -187,12 +180,12 @@ class _SellPageState extends State<SellPage> {
                 ElevatedButton(
                   onPressed: _isCommitting ? null : () async {
                     if (sellController.saleQuantities.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Cart is empty! Please add items.")));
+                      Get.snackbar('Missing Item', 'Cart is empty! Please add items.');
                       return;
                     }
                     final err = sellController.validate();
                     if (err != null) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+                      Get.snackbar('Error', err);
                       return;
                     }
 
@@ -201,9 +194,8 @@ class _SellPageState extends State<SellPage> {
                       final sale = await sellController.commitSale();
 
                       if (!mounted) return;
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
+                      Get.dialog(
+                        AlertDialog(
                           title: const Text('Sale completed'),
                           content: Text(
                             'Sold items:\n${sale.itemQuantities.entries.map((e) {
@@ -225,12 +217,12 @@ class _SellPageState extends State<SellPage> {
                               return '${it.name}: ${e.value}';
                             }).join('\n')}\n\nTotal: RM ${sale.totalAmount.toStringAsFixed(2)}',
                           ),
-                          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+                          actions: [TextButton(onPressed: () => Get.back(), child: const Text('OK'))],
                         ),
                       );
                       if (mounted) setState(() {});
                     } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Sale failed: ${e.toString()}')));
+                      Get.snackbar('Warning', 'Sale failed: ${e.toString()}');
                     } finally {
                       if (mounted) setState(() => _isCommitting = false);
                     }

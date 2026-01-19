@@ -22,42 +22,61 @@ class _ManageFieldsPageState extends State<ManageFieldsPage> {
   void _addField() {
     final txt = _newFieldCtrl.text.trim();
     if (txt.isEmpty) return;
-    final all = widget.itemController.getFields();
-    if (all.contains(txt) || txt == widget.itemController.fallbackField) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Field already exists")));
+
+    final ic = widget.itemController;
+    final all = ic.getFields();
+
+    if (all.contains(txt) || txt == ic.fallbackField) {
+      Get.snackbar('Existed', 'Field already exists');
       return;
     }
-    widget.itemController.addField(txt); // persists to firestore
+
+    ic.addField(txt);
     _newFieldCtrl.clear();
     setState(() {});
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Field added")));
+    Get.snackbar('Added', 'Field added');
   }
 
   Future<void> _deleteField(String name) async {
-    if (name == widget.itemController.fallbackField) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Cannot delete fallback field")));
+    final ic = widget.itemController;
+
+    if (name == ic.fallbackField) {
+      Get.snackbar('Warning', 'Cannot delete fallback field');
       return;
     }
 
-    // count affected items
-    final affected = widget.itemController.items.where((it) => it.field == name).length;
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
+    final affected = ic.items.where((it) => it.field == name).length;
+
+    final confirm = await Get.dialog<bool>(
+      AlertDialog(
         title: const Text("Delete field"),
-        content: Text(affected == 0
-            ? 'Delete field "$name"?'
-            : 'Delete field "$name"? This will reassign $affected item(s) to "${widget.itemController.fallbackField}".'),
+        content: Text(
+          affected == 0
+              ? 'Delete field "$name"?'
+              : 'Delete field "$name"? $affected item(s) will be moved to "${ic.fallbackField}".',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
-          ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.red), onPressed: () => Navigator.pop(ctx, true), child: const Text("Delete")),
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text(
+              "Cancel",
+              style: TextStyle(color: Colors.black),
+              ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Get.back(result: true),
+            child: const Text(
+              "Delete",
+              style: TextStyle(color: Colors.white),
+              ),
+          ),
         ],
       ),
     );
+
     if (confirm != true) return;
 
-    // reassign affected items to fallbackField
-    final ic = widget.itemController;
     for (var i = 0; i < ic.items.length; i++) {
       final it = ic.items[i];
       if (it.field == name) {
@@ -65,22 +84,41 @@ class _ManageFieldsPageState extends State<ManageFieldsPage> {
       }
     }
 
-    // remove from customFields (persist)
-    widget.itemController.removeField(name);
+    ic.removeField(name);
     setState(() {});
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Field deleted")));
+    Get.snackbar('Deletion', 'Field deleted');
   }
 
   @override
   Widget build(BuildContext context) {
-    // merged fields (fallback + custom + derived)
-    final fields = widget.itemController.getFields().toList()..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-    final custom = widget.itemController.customFields;
+    final ic = widget.itemController;
+    final fallback = ic.fallbackField;
+
+    final allFields = ic.getFields();
+
+    final hasFallbackItems =
+        ic.items.any((it) => it.field == fallback);
+
+    final List<String> fields = [];
+
+    if (hasFallbackItems) {
+      fields.add(fallback);
+    }
+
+    fields.addAll(
+      allFields
+          .where((f) => f != fallback)
+          .toList()
+        ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase())),
+    );
+
+    final customFields = ic.customFields;
 
     return Scaffold(
       appBar: AppBar(
+        title: const Text("Manage Fields"),
         backgroundColor: Colors.white,
-        title: const Text("Manage Fields")),
+      ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(12),
@@ -91,19 +129,21 @@ class _ManageFieldsPageState extends State<ManageFieldsPage> {
                   Expanded(
                     child: TextField(
                       controller: _newFieldCtrl,
-                      decoration: const InputDecoration(hintText: "Add new field (e.g. Pet, Food)", border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        hintText: "Add new field (e.g. Pet, Food)",
+                        border: OutlineInputBorder(),
+                      ),
                       onSubmitted: (_) => _addField(),
                     ),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    onPressed: _addField, 
+                    onPressed: _addField,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0A84D0),
-                      ),
-                    child: const Text(
-                      "Add",
-                      style: TextStyle(color: Colors.white),)
+                    ),
+                    child: const Text("Add",
+                        style: TextStyle(color: Colors.white)),
                   ),
                 ],
               ),
@@ -113,27 +153,57 @@ class _ManageFieldsPageState extends State<ManageFieldsPage> {
                   itemCount: fields.length,
                   separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (ctx, idx) {
-                    final f = fields[idx];
-                    final isFallback = f == widget.itemController.fallbackField;
-                    final isCustom = custom.contains(f);
-                    final derivedCount = widget.itemController.items.where((it) => it.field == f).length;
+                    final field = fields[idx];
+                    final isFallback = field == fallback;
+                    final isCustom = customFields.contains(field);
+
+                    final itemsInField = ic.items
+                        .where((it) => it.field == field)
+                        .toList();
 
                     return ListTile(
-                      title: Text(f),
-                      subtitle: Text(isFallback
-                          ? 'Fallback field'
-                          : (isCustom ? 'Custom field · $derivedCount item(s)' : 'Derived from items · $derivedCount item(s)')),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (!isFallback && isCustom)
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _deleteField(f),
-                              tooltip: "Delete custom field",
-                            ),
-                        ],
+                      title: Text(
+                        field,
+                        style: isFallback
+                            ? const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange,
+                              )
+                            : null,
                       ),
+                      subtitle: isFallback
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Needs attention · ${itemsInField.length} item(s)',
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  itemsInField
+                                          .take(3)
+                                          .map((e) => e.name)
+                                          .join(', ') +
+                                      (itemsInField.length > 3 ? ' …' : ''),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Text(
+                              isCustom
+                                  ? 'Custom field · ${itemsInField.length} item(s)'
+                                  : 'Derived from items · ${itemsInField.length} item(s)',
+                            ),
+                      trailing: (!isFallback && isCustom)
+                          ? IconButton(
+                              icon: const Icon(Icons.delete,
+                                  color: Colors.red),
+                              onPressed: () => _deleteField(field),
+                            )
+                          : null,
                     );
                   },
                 ),

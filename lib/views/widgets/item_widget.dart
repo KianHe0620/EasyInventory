@@ -3,41 +3,6 @@ import 'package:flutter/services.dart';
 import '../../models/item.model.dart';
 import '../utils/decimal_formatter.utils.dart';
 
-// ---------------- SquareCheckbox ----------------
-class SquareCheckbox extends StatelessWidget {
-  final bool value;
-  final VoidCallback onTap;
-  final double size;
-  final Color borderColor;
-  final double borderWidth;
-
-  const SquareCheckbox({
-    super.key,
-    required this.value,
-    required this.onTap,
-    this.size = 20,
-    this.borderColor = Colors.black,
-    this.borderWidth = 1.6,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(3),
-          border: Border.all(color: borderColor, width: borderWidth),
-          color: Colors.white,
-        ),
-        alignment: Alignment.center,
-        child: value ? const Icon(Icons.check, size: 16, color: Colors.black) : null,
-      ),
-    );
-  }
-}
 
 // ---------------- ItemTile ----------------
 typedef ImageLeadingBuilder = Widget Function(String imagePath);
@@ -63,9 +28,8 @@ class ItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      // leading: either checkbox or image
       leading: selectionMode
-          ? SquareCheckbox(value: selected, onTap: onToggleSelection)
+          ? Checkbox(value: selected, onChanged: (_) => onToggleSelection)
           : leadingBuilder(item.imagePath),
       title: Text(item.name),
       subtitle: Text('Price: RM ${item.sellingPrice.toStringAsFixed(2)}'),

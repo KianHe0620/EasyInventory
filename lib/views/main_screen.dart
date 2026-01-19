@@ -15,7 +15,6 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
-  // Pages are simple views, controllers are obtained via Get.find() inside them
   final List<Widget> _pages = [
     DashboardPage(),
     ItemsPage(),

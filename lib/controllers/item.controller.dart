@@ -11,8 +11,7 @@ class ItemController extends ChangeNotifier {
   // local cached list
   final List<Item> items = [];
 
-  // Temp editing image paths (itemId -> local file path or empty string)
-  // This stores user edits while they are in the edit page and have not pressed Save yet.
+  // Stores user edits while they are in the edit page and have not pressed Save yet.
   final Map<String, String?> editingImagePaths = {};
 
   // Search / filter / sort state
@@ -25,18 +24,20 @@ class ItemController extends ChangeNotifier {
   bool selectionMode = false;
   final Set<String> selectedIds = {};
 
-  // user-scoped custom fields (in-memory)
+  // User custom fields
   final Set<String> customFields = {};
 
-  // fallback field string
+  // Fallback field and supplier string
   final String fallbackField = 'Uncategorized';
+  final String fallbackSupplier = 'Uncategorized';
+
 
   // Firestore subscriptions
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _itemsSub;
   StreamSubscription<User?>? _authSub;
 
   ItemController() {
-    // Start watching auth and then start item listener for signed-in user (or keep empty if not signed in)
+    // Start watching auth and then start item listener for signed-in user
     _watchAuthAndInit();
   }
 
@@ -45,41 +46,6 @@ class ItemController extends ChangeNotifier {
     _itemsSub?.cancel();
     _authSub?.cancel();
     super.dispose();
-  }
-
-  // ------------- NEW: Editing image helpers -------------
-  /// Set a temporary image path for editing. Use null or '' to indicate "no image".
-  /// This does NOT persist to Firestore — call updateItem()/updateItemById() to persist.
-  void setEditingImagePath(String itemId, String? path) {
-    if (path == null || path.isEmpty) {
-      editingImagePaths[itemId] = null;
-    } else {
-      editingImagePaths[itemId] = path;
-    }
-    if (kDebugMode) print('ItemController: setEditingImagePath for $itemId -> ${editingImagePaths[itemId]}');
-    notifyListeners();
-  }
-
-  /// Clear the temporary editing image for the given item.
-  void clearEditingImagePath(String itemId) {
-    if (editingImagePaths.containsKey(itemId)) editingImagePaths.remove(itemId);
-    if (kDebugMode) print('ItemController: clearEditingImagePath for $itemId');
-    notifyListeners();
-  }
-
-  /// Returns the path that should be used for preview while editing:
-  /// - if a temporary editing path exists => return it
-  /// - else fallback to the saved Item.imagePath (may be empty)
-  String? getEffectiveImagePath(String itemId) {
-    if (editingImagePaths.containsKey(itemId)) {
-      return editingImagePaths[itemId];
-    }
-    try {
-      final it = items.firstWhere((i) => i.id == itemId);
-      return it.imagePath.isNotEmpty ? it.imagePath : null;
-    } catch (_) {
-      return null;
-    }
   }
 
   // ----------------- AUTH & INIT -----------------
@@ -141,8 +107,7 @@ class ItemController extends ChangeNotifier {
     return _firestore.collection('users').doc(uid).collection('items');
   }
 
-  /// Adds item to Firestore. If item.id is empty, an auto-id is generated and persisted
-  /// and the saved document will contain that id field (so doc.id === item.id).
+  /// Adds item
   Future<void> addItem(Item item) async {
     final user = _auth.currentUser;
     if (user == null) {
@@ -150,18 +115,14 @@ class ItemController extends ChangeNotifier {
     }
     final col = _userItemsCollection(user.uid);
 
-    // prefer to use a docRef so we can get the assigned id and ensure item.id matches doc.id
     final docRef = item.id.isNotEmpty ? col.doc(item.id) : col.doc();
     final id = docRef.id;
 
     final toSave = item.copyWith(id: id);
     await docRef.set(toSave.toMap());
     if (kDebugMode) print('ItemController.addItem: saved item id=$id name=${toSave.name}');
-    // snapshot listener will refresh local items list
   }
 
-  /// Update item by index (keeps your signature). Ensures we use the persisted doc id,
-  /// performs Firestore update (non-destructive) when possible.
   Future<void> updateItem(int index, Item updated) async {
     final user = _auth.currentUser;
     if (index < 0 || index >= items.length) return;
@@ -176,18 +137,16 @@ class ItemController extends ChangeNotifier {
 
     final docRef = _userItemsCollection(user.uid).doc(id);
 
-    // Use update() to avoid unintentionally wiping fields; fallback to set() if update fails
     try {
       await docRef.update(updated.toMap());
       if (kDebugMode) print('ItemController.updateItem: updated doc $id (via update())');
     } on FirebaseException catch (e) {
-      // If doc doesn't exist, set it
       if (e.code == 'not-found') {
         await docRef.set(updated.toMap());
         if (kDebugMode) print('ItemController.updateItem: doc not found, created doc $id (via set())');
       } else {
         if (kDebugMode) print('ItemController.updateItem: update failed for $id -> $e');
-        rethrow; // rethrow so callers (like commitSale()) see the error if needed
+        rethrow; // rethrow so callers can see the error if needed
       }
     } catch (e) {
       if (kDebugMode) print('ItemController.updateItem: unexpected error for $id -> $e');
@@ -198,10 +157,9 @@ class ItemController extends ChangeNotifier {
     if (editingImagePaths.containsKey(id)) {
       editingImagePaths.remove(id);
     }
-    // snapshot listener will reflect the persisted change into local items
   }
 
-  /// Convenience: update item by id (if you prefer passing id instead of index)
+  ///Update item by id
   Future<void> updateItemById(String id, Item updated) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('Not signed in. Cannot update item in Firestore.');
@@ -245,15 +203,14 @@ class ItemController extends ChangeNotifier {
     final colRef = _userItemsCollection(user.uid);
     for (final id in selectedIds) {
       batch.delete(colRef.doc(id));
-      // also clear temp editing image
-      editingImagePaths.remove(id);
+      editingImagePaths.remove(id); //clear temp editing image
     }
     await batch.commit();
     selectedIds.clear();
     selectionMode = false;
   }
 
-  /// Manual fetch (once), useful for migration/debug
+  /// Manual fetch (once)
   Future<void> loadOnceForCurrentUser() async {
     final user = _auth.currentUser;
     if (user == null) return;
@@ -270,13 +227,14 @@ class ItemController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ----------------- FIELDS (per-user/doc) -----------------
+  // ----------------- FIELDS -----------------
   DocumentReference<Map<String, dynamic>>? _fieldsDocRefForCurrentUser() {
-    final u = _auth.currentUser;
-    if (u == null) return null;
-    return _firestore.collection('users').doc(u.uid).collection('settings').doc('fields');
+    final user = _auth.currentUser;
+    if (user == null) return null;
+    return _firestore.collection('users').doc(user.uid).collection('settings').doc('fields');
   }
 
+  //Check Authentication
   Future<void> _loadCustomFieldsFromFirestoreIfSignedIn() async {
     final ref = _fieldsDocRefForCurrentUser();
     if (ref == null) return;
@@ -296,9 +254,13 @@ class ItemController extends ChangeNotifier {
       } else {
         final data = doc.data()!;
         final list = (data['fields'] as List<dynamic>?)?.cast<String>() ?? [];
+        
         customFields
           ..clear()
-          ..addAll(list.where((s) => s != null).map((s) => s.trim()).where((s) => s.isNotEmpty));
+          ..addAll(
+            list.map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+          );
       }
       notifyListeners();
     } catch (e) {
@@ -347,6 +309,22 @@ class ItemController extends ChangeNotifier {
       final it = items[i];
       if (it.field.isEmpty) {
         items[i] = it.copyWith(field: fallbackField);
+      }
+    }
+  }
+
+  void normalizeInvalidSuppliers(Set<String> existingSupplierNames) {
+    for (var i = 0; i < items.length; i++) {
+      final it = items[i];
+
+      // already fallback
+      if (it.supplier == fallbackSupplier) continue;
+
+      // supplier deleted or invalid
+      if (!existingSupplierNames.contains(it.supplier)) {
+        final updated = it.copyWith(supplier: fallbackSupplier);
+        items[i] = updated;
+        updateItem(i, updated); // persist to Firestore
       }
     }
   }
@@ -418,14 +396,15 @@ class ItemController extends ChangeNotifier {
   }
 
   void toggleSelection(String id) {
-    if (selectedIds.contains(id)) selectedIds.remove(id);
-    else selectedIds.add(id);
+    if (selectedIds.contains(id)) {
+      selectedIds.remove(id);
+    } else {
+      selectedIds.add(id);
+    }
     notifyListeners();
   }
 
   // ----------------- Migration helpers -----------------
-  /// Push currently-cached (local) items to Firestore under the currently-signed-in user.
-  /// Use this once after sign-in to migrate local seed data.
   Future<void> migrateLocalItemsToFirestoreForCurrentUser() async {
     final user = _auth.currentUser;
     if (user == null) {
@@ -441,5 +420,37 @@ class ItemController extends ChangeNotifier {
     }
     await batch.commit();
     if (kDebugMode) print('ItemController.migrateLocalItemsToFirestoreForCurrentUser: migrated ${items.length} items');
+  }
+
+  // ----------------- Image Management -----------------
+  /// Set a temporary image path for editing. Use null or '' to indicate "no image".
+  void setEditingImagePath(String itemId, String? path) {
+    if (path == null || path.isEmpty) {
+      editingImagePaths[itemId] = null;
+    } else {
+      editingImagePaths[itemId] = path;
+    }
+    if (kDebugMode) print('ItemController: setEditingImagePath for $itemId -> ${editingImagePaths[itemId]}');
+    notifyListeners();
+  }
+
+  /// Clear the temporary editing image for the given item.
+  void clearEditingImagePath(String itemId) {
+    if (editingImagePaths.containsKey(itemId)) editingImagePaths.remove(itemId);
+    if (kDebugMode) print('ItemController: clearEditingImagePath for $itemId');
+    notifyListeners();
+  }
+
+  /// Returns the path that should be used for preview while editing:
+  String? getEffectiveImagePath(String itemId) {
+    if (editingImagePaths.containsKey(itemId)) {
+      return editingImagePaths[itemId];
+    }
+    try {
+      final it = items.firstWhere((i) => i.id == itemId);
+      return it.imagePath.isNotEmpty ? it.imagePath : null;
+    } catch (_) {
+      return null;
+    }
   }
 }

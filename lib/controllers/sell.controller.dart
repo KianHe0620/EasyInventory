@@ -296,7 +296,7 @@ class SellController extends ChangeNotifier {
   }
 
   // -------------------------
-  // Helpers
+  // Get Profit
   // -------------------------
   double getTodayProfit() {
     final today = DateTime.now();

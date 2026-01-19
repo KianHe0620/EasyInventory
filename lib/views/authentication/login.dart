@@ -1,9 +1,10 @@
 import 'package:easyinventory/controllers/authentication.controller.dart';
 import 'package:easyinventory/views/authentication/register.dart';
-import 'package:easyinventory/views/mainScreen.dart';
+import 'package:easyinventory/views/main_screen.dart';
 import 'package:easyinventory/views/widgets/button.global.dart';
 import 'package:easyinventory/views/widgets/text_form.global.dart';
 import 'package:flutter/material.dart';
+import 'package:get/route_manager.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,8 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
 
   void _showMessage(String msg) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
+    Get.snackbar('Message', msg);
   }
 
   Future<void> _login() async {
@@ -35,16 +35,16 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     setState(() => _loading = true);
-    final err = await _authController.signIn(email, pass);
+    final error = await _authController.signIn(email, pass);
+
+    if (!mounted) return;
+
     setState(() => _loading = false);
 
-    if (err == null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const MainScreen()),
-      );
+    if (error == null) {
+      Get.off(() => const MainScreen());
     } else {
-      _showMessage(err);
+      _showMessage(error);
     }
   }
 
@@ -53,9 +53,8 @@ class _LoginScreenState extends State<LoginScreen> {
     final TextEditingController resetEmailController =
         TextEditingController(text: emailController.text);
 
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
+    Get.dialog(
+      AlertDialog(
         title: const Text('Reset Password'),
         content: TextField(
           controller: resetEmailController,
@@ -66,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Get.back(),
             child: const Text('Cancel'),
           ),
           TextButton(
@@ -77,20 +76,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 return;
               }
 
-              Navigator.pop(context);
+              Get.back();
               setState(() => _loading = true);
 
-              final err =
-                  await _authController.sendPasswordReset(email);
+              final error = await _authController.sendPasswordReset(email);
 
               setState(() => _loading = false);
 
-              if (err == null) {
-                _showMessage(
-                  'Password reset email sent. Check your inbox.',
-                );
+              if (error == null) {_showMessage('Password reset email sent. Check your inbox.',);
               } else {
-                _showMessage(err);
+                _showMessage(error);
               }
             },
             child: const Text('Send'),
@@ -168,18 +163,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: 1,
                 onTap: () async {
                   setState(() => _loading = true);
-                  final err =
-                      await _authController.signInWithGoogle();
+                  final error = await _authController.signInWithGoogle();
+                  if(!mounted) return;
                   setState(() => _loading = false);
 
-                  if (err == null) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const MainScreen()),
-                    );
+                  if (error == null) {
+                    Get.offAll(()=> const MainScreen());
                   } else {
-                    _showMessage(err);
+                    _showMessage(error);
                   }
                 },
               ),
@@ -192,11 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Text('Register a new account?'),
                   TextButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => RegisterScreen()),
-                      );
+                      Get.to(()=>RegisterScreen());
                     },
                     child: const Text(
                       'Register',

@@ -55,7 +55,7 @@ class _EditSupplierPageState extends State<EditSupplierPage> {
 
       widget.supplierController.updateSupplier(widget.supplier.id, updated);
 
-      Navigator.pop(context, updated); // ✅ return updated supplier
+      Get.back(result: updated);
     }
   }
 

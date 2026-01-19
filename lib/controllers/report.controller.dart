@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -30,17 +29,13 @@ class ReportController extends ChangeNotifier {
             "qty": it.quantity,
             "avgOutflow": avgOutflow,
             "estDays": estDays,
-            "suggestion": "Restock ${(avgOutflow * 30) - it.quantity} units for 30 days coverage",
           };
         }).toList();
 
     return LowStockReport(generatedOn: now, items: items);
   }
 
-  /// Generate Weekly Sales Report
-  ///
-  /// - safe when items have been deleted: falls back to 'Unknown item' and uses sale.totalAmount
-  /// - aggregates sold items by item id (name/price used if item exists)
+  // Generate Weekly Sales Report
   WeeklySalesReport generateWeeklySalesReport(DateTime start, DateTime end) {
     // normalize the range to include the entire start and end days
     final DateTime startInclusive = DateTime(start.year, start.month, start.day, 0, 0, 0);
@@ -158,7 +153,7 @@ class ReportController extends ChangeNotifier {
           if (summaryLines != null)
             ...summaryLines.map((e) => pw.Text(e)),
           pw.SizedBox(height: 16),
-          pw.Table.fromTextArray(
+          pw.TableHelper.fromTextArray(
             headers: headers,
             data: rows,
             headerDecoration:

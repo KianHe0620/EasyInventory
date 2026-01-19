@@ -87,6 +87,44 @@ class SmartReportController extends ChangeNotifier {
   }
 
   // =========================
+  // VARIANCE CALCULATION
+  // =========================
+  double _variance(List<int> values) {
+    if (values.length < 2) return 0.0;
+
+    final mean = values.reduce((a, b) => a + b) / values.length;
+    final sumSq = values
+        .map((v) => pow(v - mean, 2))
+        .reduce((a, b) => a + b);
+
+    return sumSq / values.length;
+  }
+
+  // =========================
+  // NON ZERO DAY CALCULATION
+  // =========================
+  int _countNonZeroDays(List<int> values) {
+    return values.where((v) => v > 0).length;
+  }
+
+  double _calculateConfidence({
+    required double variance,
+    required int nonZeroDays,
+    required int windowDays,
+  }) {
+    final stabilityScore = 1 / (1 + variance);
+    final sufficiencyScore =
+        windowDays == 0 ? 0 : nonZeroDays / windowDays;
+
+    final rawConfidence =
+        (0.6 * stabilityScore) + (0.4 * sufficiencyScore);
+
+    return rawConfidence.clamp(0.3, 0.95);
+  }
+
+
+
+  // =========================
   // MAIN GENERATION
   // =========================
   List<SmartRecommendation> generate(SmartReportInput input) {
@@ -127,6 +165,11 @@ class SmartReportController extends ChangeNotifier {
               ? 'Medium'
               : 'Low';
 
+      final daily = _dailyCountsForItem(it.id, windowDays);
+      final varValue = _variance(daily);
+      final nonZeroDays = _countNonZeroDays(daily);
+      final confidence = _calculateConfidence(variance: varValue, nonZeroDays: nonZeroDays, windowDays: windowDays);
+
       recs.add(
         SmartRecommendation(
           itemId: it.id,
@@ -137,14 +180,13 @@ class SmartReportController extends ChangeNotifier {
           advisoryCappedQty: cap,
           hitCap: hitCap,
           priority: priority,
-          reason: 'Smart demand-based restock calculation',
           baselineDaily: baseline,
           boostedDaily: boosted,
           cap: cap,
-          confidence: 0.8,
-          variance: 0,
+          confidence: confidence,
+          variance: varValue,
           consideredWindowDays: windowDays,
-          nonZeroSampleDays: 0,
+          nonZeroSampleDays: nonZeroDays,
         ),
       );
     }
@@ -194,7 +236,7 @@ class SmartReportController extends ChangeNotifier {
 
             pw.SizedBox(height: 12),
 
-            pw.Table.fromTextArray(
+            pw.TableHelper.fromTextArray(
               headers: [
                 'Item',
                 'Current',

@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart'; // optional
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path/path.dart' as p;
 
 class ImageHelper {
@@ -30,7 +30,7 @@ class ImageHelper {
           .child('users')
           .child(userId)
           .child('item_images')
-          .child(DateTime.now().millisecondsSinceEpoch.toString() + "_" + filename);
+          .child('${DateTime.now().millisecondsSinceEpoch}_$filename');
 
       final task = await ref.putFile(file);
       final url = await task.ref.getDownloadURL();

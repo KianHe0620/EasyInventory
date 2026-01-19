@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ButtonGlobal extends StatelessWidget {
-  ButtonGlobal({super.key, required this.boxColor, required this.text, required this.textColor, required this.width, required this.onTap});
+  const ButtonGlobal({super.key, required this.boxColor, required this.text, required this.textColor, required this.width, required this.onTap});
   final Color boxColor;
   final String text;
   final Color textColor;

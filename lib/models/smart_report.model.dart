@@ -44,7 +44,6 @@ class SmartRecommendation {
   final bool hitCap;
 
   final String priority;
-  final String reason;
 
   // explainability / diagnostics
   final double baselineDaily;
@@ -64,7 +63,6 @@ class SmartRecommendation {
     required this.advisoryCappedQty,
     required this.hitCap,
     required this.priority,
-    required this.reason,
     required this.baselineDaily,
     required this.boostedDaily,
     required this.cap,

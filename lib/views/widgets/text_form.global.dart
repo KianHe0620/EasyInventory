@@ -19,31 +19,29 @@ class TextForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: TextFormField(
-        controller: controller,
-        keyboardType: textInputType,
-        obscureText: obscure,
-        decoration: InputDecoration(
-          hintText: text,
-          hintStyle: TextStyle(fontWeight: FontWeight.w400),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none
-          ),
-          filled: true,
-          fillColor: const Color(0xFFF2F2F2),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+    return TextFormField(
+      controller: controller,
+      keyboardType: textInputType,
+      obscureText: obscure,
+      decoration: InputDecoration(
+        hintText: text,
+        hintStyle: TextStyle(fontWeight: FontWeight.w400),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none
         ),
-        validator: mustFill
-          ? (value) {
-              if (value == null || value.trim().isEmpty) {
-                return errorMessage;
-              }
-              return null;
-            }
-          : null,
+        filled: true,
+        fillColor: const Color(0xFFF2F2F2),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
       ),
+      validator: mustFill
+        ? (value) {
+            if (value == null || value.trim().isEmpty) {
+              return errorMessage;
+            }
+            return null;
+          }
+        : null,
     );
   }
 }

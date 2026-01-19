@@ -198,13 +198,12 @@ class _SaleHistoryPageState extends State<SaleHistoryPage> {
                           }
                         }
 
-                        showDialog(
-                          context: context,
-                          builder: (dctx) => AlertDialog(
+                        Get.dialog(
+                          AlertDialog(
                             backgroundColor: Colors.white,
                             title: const Text('Sale details'),
                             content: Text('Date: ${s.createdAt}\n\n$details\n\nTotal: RM ${s.totalAmount.toStringAsFixed(2)}'),
-                            actions: [TextButton(onPressed: () => Navigator.pop(dctx), child: const Text('OK'))],
+                            actions: [TextButton(onPressed: () => Get.back(), child: const Text('OK'))],
                           ),
                         );
                       },

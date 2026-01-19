@@ -31,7 +31,7 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
         address: addressController.text.trim(),
       );
       widget.supplierController.addSupplier(newSupplier);
-      Navigator.pop(context, newSupplier);
+      Get.back(result: newSupplier);
     }
   }
 
@@ -44,32 +44,49 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
         onRightButtonPressed: _saveSupplier,
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(15.0),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(15),
           child: Form(
             key: _formKey,
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(height: 16),
+
+                const Text("Supplier's Name", style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 5),
                 TextForm(
                   controller: supplierNameController,
                   text: "Supplier's Name",
-                  textInputType: TextInputType.text,
+                  textInputType: TextInputType.name,
                   mustFill: true,
-                  errorMessage: "Supplier name is required",
+                  errorMessage: "Supplier's name is required",
                 ),
+                const SizedBox(height: 16),
+
+                const Text("Phone", style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 5),
                 TextForm(
                   controller: phoneNumberController,
                   text: "Phone Number",
                   textInputType: TextInputType.phone,
                 ),
+                const SizedBox(height: 16),
+
+                const Text("Email", style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 5),
                 TextForm(
                   controller: emailAddressController,
                   text: "Email Address",
                   textInputType: TextInputType.emailAddress,
                 ),
+                const SizedBox(height: 16),
+
+                const Text("Address", style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 5),
                 TextForm(
                   controller: addressController,
-                  text: "Address", 
+                  text: "Address",
                   textInputType: TextInputType.text,
                 ),
               ],

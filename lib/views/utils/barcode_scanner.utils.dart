@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 class BarcodeScannerPage extends StatefulWidget {
   const BarcodeScannerPage({super.key});
 
-  /// returns the scanned barcode string via Navigator.pop(context, code)
   @override
   State<BarcodeScannerPage> createState() => _BarcodeScannerPageState();
 }
@@ -27,8 +27,7 @@ class _BarcodeScannerPageState extends State<BarcodeScannerPage> {
     if (code == null || code.isEmpty) return;
     _scanned = true;
 
-    // pop with result
-    Navigator.of(context).pop(code);
+    Get.back(result: code);
   }
 
   @override

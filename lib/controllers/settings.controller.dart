@@ -5,7 +5,7 @@ import 'package:easyinventory/controllers/authentication.controller.dart';
 class SettingsController extends ChangeNotifier {
   final AuthController authController;
 
-  Settings _settings = Settings();
+  final Settings _settings = Settings();
 
   SettingsController({required this.authController});
 

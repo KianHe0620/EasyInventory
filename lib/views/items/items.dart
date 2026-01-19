@@ -101,7 +101,6 @@ class _ItemsPageState extends State<ItemsPage> {
   @override
   Widget build(BuildContext context) {
     final itemCtrl = widget.itemController;
-    final sellCtrl = widget.sellController;
     final filteredItems = itemCtrl.getFilteredSortedItems();
 
     return Scaffold(
@@ -141,11 +140,19 @@ class _ItemsPageState extends State<ItemsPage> {
                     title: const Text('Confirm delete'),
                     content: Text('Delete ${itemCtrl.selectedIds.length} item(s)?'),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+                      TextButton(onPressed: () => Get.back(result: false), 
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(color: Colors.black),
+                        )
+                      ),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                        onPressed: () => Navigator.pop(ctx, true),
-                        child: const Text('Delete'),
+                        onPressed: () => Get.back(result: true),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(color: Colors.white),
+                          ),
                       ),
                     ],
                   ),
@@ -193,7 +200,7 @@ class _ItemsPageState extends State<ItemsPage> {
                       IconButton(
                         icon: const Icon(Icons.barcode_reader),
                         onPressed: () async {
-                          final result = await Navigator.push<String?>(context, MaterialPageRoute(builder: (_) => const BarcodeScannerPage()));
+                          final result = await Get.to<String?>(() => const BarcodeScannerPage());
                           if (result != null && result.isNotEmpty) {
                             _searchCtrl.text = result;
                             itemCtrl.setSearchQuery(result);
@@ -224,22 +231,20 @@ class _ItemsPageState extends State<ItemsPage> {
                   selectionMode: itemCtrl.selectionMode,
                   selected: itemCtrl.selectedIds.contains(item.id),
                   onToggleSelection: () => setState(() => itemCtrl.toggleSelection(item.id)),
-                  onTap: () {
+                  onTap: () async {
                     if (itemCtrl.selectionMode) {
                       setState(() => itemCtrl.toggleSelection(item.id));
                       return;
                     }
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ItemEditPage(
-                          item: item,
-                          index: originalIndex,
-                        ),
-                      ),
-                    ).then((updated) {
-                      if (updated != null) setState(() {});
-                    });
+                    final updated = await Get.to(
+                      () => ItemEditPage(
+                        item: item, 
+                        index: originalIndex)
+                    );
+
+                    if (updated != null){
+                      setState(() {});
+                    }
                   },
                   leadingBuilder: _buildItemLeading,
                 );
@@ -252,15 +257,16 @@ class _ItemsPageState extends State<ItemsPage> {
           ? SelectionBottomBar(
               onUpdate: () {
                 if (itemCtrl.selectedIds.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No items selected")));
+                  Get.snackbar('No Item', 'No items selected');
                   return;
                 }
                 final selectedItems = itemCtrl.items.where((it) => itemCtrl.selectedIds.contains(it.id)).toList();
-                Navigator.push(context, MaterialPageRoute(builder: (_) => BulkUpdatePage(items: selectedItems))).then((_) => setState(() {}));
+                Get.to(()=>BulkUpdatePage(items: selectedItems)); 
+                setState(() {});
               },
               onAddToSell: () {
                 if (itemCtrl.selectedIds.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("No items selected")));
+                  Get.snackbar('No Item', 'No items selected');
                   return;
                 }
                 final selectedItems = itemCtrl.items.where((it) => itemCtrl.selectedIds.contains(it.id)).toList();
@@ -270,16 +276,18 @@ class _ItemsPageState extends State<ItemsPage> {
                 setState(() {
                   itemCtrl.toggleSelectionMode();
                 });
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Items added to cart. Go to Sell tab.")));
+                Get.snackbar('Success', 'Items added to cart. Go to Sell tab.');
               },
             )
           : null,
       floatingActionButton: !itemCtrl.selectionMode
           ? FloatingAddBtn(
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => ItemAddPage())).then((newItem) {
-                  if (newItem != null) setState(() {});
-                });
+              onPressed: () async {
+                final newItem = await Get.to(() => ItemAddPage());
+                
+                if (newItem != null){
+                  setState(() {});
+                }
               },
             )
           : null,

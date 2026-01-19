@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class GlobalAppBar extends StatelessWidget implements PreferredSizeWidget{
   const GlobalAppBar({super.key, required this.title, this.rightIconBtn, this.onRightButtonPressed});
@@ -11,7 +12,7 @@ class GlobalAppBar extends StatelessWidget implements PreferredSizeWidget{
   Widget build(BuildContext context) {
     return AppBar(
       leading: IconButton(
-        onPressed: () => Navigator.of(context).pop(), 
+        onPressed: () => Get.back(), 
         icon: const Icon(Icons.arrow_back)
       ),
       title: Text(

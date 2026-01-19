@@ -75,11 +75,7 @@ class DashboardPage extends StatelessWidget {
                         ),
                         child: InkWell(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const SuppliersPage()),
-                            );
+                            Get.to(() => const SuppliersPage());
                           },
                           child: const Padding(
                             padding: EdgeInsets.symmetric(vertical: 20),
@@ -115,13 +111,9 @@ class DashboardPage extends StatelessWidget {
                               sellController: sellController,
                             );
 
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ReportPage(
-                                  reportController: reportController,
-                                  smartReportController: smartReportController, // ✅ pass it
-                                ),
+                            Get.to(() => ReportPage(
+                                reportController: reportController,
+                                smartReportController: smartReportController,
                               ),
                             );
                           },

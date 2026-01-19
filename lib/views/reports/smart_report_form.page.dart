@@ -19,7 +19,6 @@ class _SmartReportFormPageState extends State<SmartReportFormPage> {
   String? selectedField;
   int upcomingEventDays = 0;
   String demandType = "ema";
-  String manualDemand = "";
   int targetDays = 30;
   int windowDays = 30;
   int minOrder = 1;
@@ -30,14 +29,13 @@ class _SmartReportFormPageState extends State<SmartReportFormPage> {
   void initState() {
     super.initState();
     final setFields = widget.smartReportController.itemController.getFields();
-    fields = <String>['All']..addAll(setFields.toList()..sort());
+    fields = <String>['All', ...setFields.toList()..sort()];
     selectedField = fields.isNotEmpty ? fields.first : 'All';
   }
 
   void _openHelpDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
+    Get.dialog(
+      AlertDialog(
         title: const Text('Field help (short)'),
         content: SizedBox(
           width: double.maxFinite,
@@ -55,11 +53,7 @@ class _SmartReportFormPageState extends State<SmartReportFormPage> {
                 ),
                 _HelpRow(
                   title: 'Demand Basis',
-                  desc: 'How to compute daily demand: avg7 (7-day average), avg30 (30-day average), EMA (exponential smoothing), or manual (you type the daily demand).',
-                ),
-                _HelpRow(
-                  title: 'Manual Daily Demand',
-                  desc: 'Used only when Demand Basis = manual. Enter the estimated number sold per day (e.g. 1.0).',
+                  desc: 'Average computes historical mean demand, while EMA applies smoothing to prioritize recent sales trends.',
                 ),
                 _HelpRow(
                   title: 'Target Coverage (days)',
@@ -67,7 +61,7 @@ class _SmartReportFormPageState extends State<SmartReportFormPage> {
                 ),
                 _HelpRow(
                   title: 'Analysis Window (days)',
-                  desc: 'How many past days to use when evaluating data quality (variance, confidence, non-zero days). This does NOT change the demand basis calculation itself.',
+                  desc: 'How many past days to use when evaluating data quality (variance, confidence, non-zero days).',
                 ),
                 _HelpRow(
                   title: 'Minimum Order Quantity',
@@ -90,7 +84,7 @@ class _SmartReportFormPageState extends State<SmartReportFormPage> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+          TextButton(onPressed: () => Get.back(), child: const Text('Close')),
         ],
       ),
     );
@@ -103,7 +97,6 @@ class _SmartReportFormPageState extends State<SmartReportFormPage> {
       field: selectedField ?? 'All',
       upcomingEventDays: upcomingEventDays,
       demandMode: demandType,
-      manualDaily: demandType == "manual" ? double.tryParse(manualDemand) : null,
       targetDays: targetDays,
       windowDays: windowDays,
       minOrder: minOrder > 0 ? minOrder : null,
@@ -113,15 +106,11 @@ class _SmartReportFormPageState extends State<SmartReportFormPage> {
 
     final recs = widget.smartReportController.generate(input);
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => SmartReportResultPage(
+    Get.to(() => SmartReportResultPage(
           input: input,
           recommendations: recs,
         ),
-      ),
-    );
+      );
   }
 
   @override
@@ -145,7 +134,7 @@ class _SmartReportFormPageState extends State<SmartReportFormPage> {
           child: ListView(
             children: [
               DropdownButtonFormField<String>(
-                value: selectedField,
+                initialValue: selectedField,
                 items: fields.map((f) => DropdownMenuItem(value: f, child: Text(f))).toList(),
                 decoration: const InputDecoration(labelText: "Item Field"),
                 onChanged: (v) => setState(() => selectedField = v),
@@ -160,30 +149,14 @@ class _SmartReportFormPageState extends State<SmartReportFormPage> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: demandType,
+                initialValue: demandType,
                 items: const [
-                  DropdownMenuItem(value: "avg7", child: Text("Average (7 days)")),
-                  DropdownMenuItem(value: "avg30", child: Text("Average (30 days)")),
+                  DropdownMenuItem(value: "avg", child: Text("Average")),
                   DropdownMenuItem(value: "ema", child: Text("EMA (Smooth)")),
-                  DropdownMenuItem(value: "manual", child: Text("Manual input")),
                 ],
                 decoration: const InputDecoration(labelText: "Demand Basis"),
                 onChanged: (v) => setState(() => demandType = v ?? "ema"),
               ),
-              if (demandType == "manual") ...[
-                const SizedBox(height: 10),
-                TextFormField(
-                  decoration: const InputDecoration(labelText: "Manual Daily Demand"),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  onChanged: (v) => manualDemand = v.trim(),
-                  validator: (_) {
-                    if (demandType != "manual") return null;
-                    final d = double.tryParse(manualDemand);
-                    if (d == null || d < 0) return "Enter a valid number";
-                    return null;
-                  },
-                ),
-              ],
               const SizedBox(height: 12),
               TextFormField(
                 decoration: const InputDecoration(labelText: "Target Coverage (days)"),
@@ -193,7 +166,7 @@ class _SmartReportFormPageState extends State<SmartReportFormPage> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<int>(
-                value: windowDays,
+                initialValue: windowDays,
                 items: const [
                   DropdownMenuItem(value: 7, child: Text("Last 7 days (more responsive)")),
                   DropdownMenuItem(value: 14, child: Text("Last 14 days (balanced)")),

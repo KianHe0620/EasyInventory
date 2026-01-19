@@ -58,7 +58,7 @@ class AuthController {
     }
   }
 
-  // ✅ REAL forgot password
+  // Forgot password
   Future<String?> sendPasswordReset(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email.trim());

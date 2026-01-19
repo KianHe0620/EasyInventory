@@ -1,10 +1,12 @@
+import 'package:easyinventory/models/item.model.dart';
 import 'package:flutter/material.dart';
-import 'package:easyinventory/controllers/supplier.controller.dart';
-import 'package:easyinventory/views/suppliers/add_supplier.page.dart';
-import 'package:easyinventory/views/suppliers/edit_supplier.page.dart';
-import 'package:easyinventory/views/widgets/app_bar.global.dart';
-import 'package:easyinventory/views/widgets/floating_add_btn.global.dart';
-import 'package:easyinventory/views/widgets/search.global.dart';
+import 'package:get/get.dart';
+import '../../controllers/item.controller.dart';
+import '../../controllers/supplier.controller.dart';
+import '../../views/suppliers/add_supplier.page.dart';
+import '../../views/suppliers/edit_supplier.page.dart';
+import '../../views/widgets/floating_add_btn.global.dart';
+import '../../views/widgets/search.global.dart';
 
 class SuppliersPage extends StatefulWidget {
   const SuppliersPage({super.key});
@@ -15,17 +17,16 @@ class SuppliersPage extends StatefulWidget {
 
 class _SuppliersPageState extends State<SuppliersPage> {
   final SupplierController _controller = SupplierController();
+  final ItemController _itemController = Get.find<ItemController>();
 
   @override
   void initState() {
     super.initState();
-    // listen to controller so page updates when controller changes (add/remove/update)
     _controller.addListener(_onControllerChanged);
   }
 
   void _onControllerChanged() {
-    if (!mounted) return;
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   @override
@@ -35,57 +36,99 @@ class _SuppliersPageState extends State<SuppliersPage> {
     super.dispose();
   }
 
+  // -------------------------------
+  // Group items by supplier
+  // -------------------------------
+  Map<String, List<Item>> _itemsBySupplier() {
+    final map = <String, List<Item>>{};
+    final fallback = _itemController.fallbackSupplier;
+
+    for (final item in _itemController.items) {
+      final key = item.supplier.isNotEmpty ? item.supplier : fallback;
+      map.putIfAbsent(key, () => []);
+      map[key]!.add(item);
+    }
+    return map;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: GlobalAppBar(
-        title: _controller.isSelectionMode
-            ? "${_controller.selectedSuppliers.length} selected"
-            : "Suppliers",
-        rightIconBtn:
-            _controller.isSelectionMode ? Icons.delete : Icons.checklist,
-        onRightButtonPressed: () async {
-          if (_controller.isSelectionMode) {
-            final confirm = await showDialog<bool>(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                title: const Text("Delete Suppliers"),
-                content: const Text(
-                    "Are you sure you want to delete selected suppliers?"),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    child: const Text("Cancel"),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx, true),
-                    child: const Text("Delete"),
-                  ),
-                ],
-              ),
-            );
+    final itemsBySupplier = _itemsBySupplier();
+    final fallbackSupplier = _itemController.fallbackSupplier;
 
-            if (confirm == true) {
-              // use controller's removeSelectedSuppliers which handles notify
-              _controller.removeSelectedSuppliers();
-              // UI will update via listener
-            }
-          } else {
-            _controller.toggleSelectionMode();
-            // UI updated via listener
-          }
-        },
+    final uncategorizedItems =
+        itemsBySupplier[fallbackSupplier] ?? [];
+    final showUncategorized = uncategorizedItems.isNotEmpty;
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        title: _controller.isSelectionMode
+            ? Text('${_controller.selectedSuppliers.length} selected')
+            : const Text('Suppliers'),
+        actions: [
+          IconButton(
+            icon: Icon(
+              _controller.isSelectionMode ? Icons.close : Icons.checklist,
+            ),
+            onPressed: () {
+              _controller.toggleSelectionMode();
+            },
+          ),
+
+          if (_controller.isSelectionMode)
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: _controller.selectedSuppliers.isEmpty
+                  ? null
+                  : () async {
+                      final confirm = await Get.dialog<bool>(
+                        AlertDialog(
+                          title: const Text("Delete Suppliers"),
+                          content: Text(
+                            "Delete ${_controller.selectedSuppliers.length} supplier(s)?\n"
+                            "Items using them will be set to Uncategorized.",
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Get.back(result: false),
+                              child: const Text(
+                                "Cancel",
+                                style: TextStyle(color: Colors.black),
+                              ),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                              ),
+                              onPressed: () => Get.back(result: true),
+                              child: const Text(
+                                "Delete",
+                                style: TextStyle(color: Colors.white),
+                                ),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true) {
+                        await _controller.removeSelectedSuppliers();
+
+                        // normalize items → Uncategorized
+                        final existingSupplierNames =
+                            _controller.allSuppliers.map((s) => s.name).toSet();
+
+                        _itemController
+                            .normalizeInvalidSuppliers(existingSupplierNames);
+
+                        _controller.toggleSelectionMode();
+                      }
+                    },
+            ),
+        ],
       ),
       floatingActionButton: FloatingAddBtn(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => AddSupplierPage(),
-            ),
-          );
-          // no need for .then -> controller notifies and listener will rebuild
-        },
+        onPressed: () {Get.to(()=>AddSupplierPage());},
       ),
       body: Column(
         children: [
@@ -94,77 +137,74 @@ class _SuppliersPageState extends State<SuppliersPage> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: SearchBarGlobal(
               controller: _controller.searchController,
-              onChanged: (value) => _controller.filterSuppliers(value),
-              onClear: () => _controller.clearSearch(),
+              onChanged: _controller.filterSuppliers,
+              onClear: _controller.clearSearch,
             ),
           ),
           const SizedBox(height: 16),
-          const Divider(height: 0, thickness: 0.8, color: Colors.grey),
+          const Divider(height: 0, thickness: 0.8),
 
-          // ----------------------------
-          // cancel bar shown when selection mode is active
-          // ----------------------------
-          if (_controller.isSelectionMode)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.close),
-                      label: const Text('Cancel selection'),
-                      onPressed: () {
-                        _controller.toggleSelectionMode();
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.select_all),
-                      label: const Text('Select all'),
-                      onPressed: () {
-                        // quick "select all" helper:
-                        for (final s in _controller.filteredSuppliers) {
-                          _controller.selectedSuppliers.add(s.id);
-                        }
-                        _controller.notifyListeners();
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // the supplier list
           Expanded(
-            child: ListView.builder(
-              itemCount: _controller.filteredSuppliers.length,
+            child: ListView.separated(
+              itemCount: _controller.filteredSuppliers.length + (showUncategorized ? 1 : 0),
+              separatorBuilder: (_, __) => const Divider(height: 1),
               itemBuilder: (context, index) {
-                final supplier = _controller.filteredSuppliers[index];
-                final isSelected = _controller.isSelected(supplier.id);
+
+                //UNCATEGORIZED SUPPLIER
+                if (showUncategorized && index == 0) {
+                  return ListTile(
+                    title: Text(
+                      fallbackSupplier,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange,
+                      ),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Needs attention · ${uncategorizedItems.length} item(s)',
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          uncategorizedItems
+                                  .take(3)
+                                  .map((e) => e.name)
+                                  .join(', ') +
+                              (uncategorizedItems.length > 3 ? ' …' : ''),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // NORMAL SUPPLIERS
+                final realIndex =
+                    showUncategorized ? index - 1 : index;
+                final supplier =
+                    _controller.filteredSuppliers[realIndex];
+                final isSelected =
+                    _controller.isSelected(supplier.id);
 
                 return ListTile(
                   title: Text(supplier.name),
                   trailing: _controller.isSelectionMode
                       ? Checkbox(
                           value: isSelected,
-                          onChanged: (_) {
-                            _controller.toggleSelection(supplier.id);
-                          },
+                          onChanged: (_) =>
+                              _controller.toggleSelection(supplier.id),
                         )
                       : null,
                   onTap: () {
                     if (_controller.isSelectionMode) {
                       _controller.toggleSelection(supplier.id);
                     } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              EditSupplierPage(supplier: supplier),
-                        ),
-                      );
+                      Get.to(() =>EditSupplierPage(supplier: supplier));
                     }
                   },
                 );

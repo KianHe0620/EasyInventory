@@ -37,19 +37,22 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _confirmSignOut() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
+    final ok = await Get.dialog<bool>(
+      AlertDialog(
         title: const Text('Sign out'),
         content: const Text('Are you sure you want to sign out?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel',style: TextStyle(color: Colors.black),),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Sign out'),
+            onPressed: () => Get.back(result: true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0A84D0),
+                foregroundColor: Colors.white,
+              ),
+            child: const Text('Sign out',style: TextStyle(color: Colors.white),)
           ),
         ],
       ),
@@ -60,16 +63,10 @@ class _SettingsPageState extends State<SettingsPage> {
     final err = await ctrl.signOut();
     if (err == null) {
       if (!mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (route) => false,
-      );
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Signed out')));
+      Get.offAll(() => const LoginScreen());
+      Get.snackbar('Success', 'Signed out');
     } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Sign out failed: $err')));
+      Get.snackbar('Failed', 'Sign out failed: $err');
     }
   }
 
@@ -141,12 +138,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 title: const Text('Manage Fields'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ManageFieldsPage(),
-                    ),
-                  );
+                  Get.to(() => ManageFieldsPage(),);
                 },
               ),
             ],

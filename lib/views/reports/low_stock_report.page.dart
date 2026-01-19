@@ -22,14 +22,12 @@ class LowStockReportPage extends StatelessWidget {
         'Quantity',
         'Avg Daily Outflow',
         'Est. Days Left',
-        'Suggestion',
       ],
       rows: report.items.map((item) => [
         item['name'],
         item['qty'],
         item['avgOutflow'].toStringAsFixed(2),
         item['estDays'].toStringAsFixed(1),
-        item['suggestion'],
       ]).toList(),
       summaryLines: [
         'Generated On: '
@@ -39,9 +37,7 @@ class LowStockReportPage extends StatelessWidget {
       ],
     );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('PDF saved in Downloads:\n${file.path}')),
-    );
+    Get.snackbar('Success', 'PDF saved in Downloads:\n${file.path}');
   }
 
   @override
@@ -76,7 +72,7 @@ class LowStockReportPage extends StatelessWidget {
                 itemBuilder: (ctx, i) {
                   final item = report.items[i];
                   return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 6),
+                    margin: const EdgeInsets.symmetric(vertical: 5),
                     child: ListTile(
                       title: Text(item["name"].toString()),
                       subtitle: Text(
@@ -84,7 +80,6 @@ class LowStockReportPage extends StatelessWidget {
                         "Average Daily Outflow: ${item["avgOutflow"]}/day\n"
                         "Estimated Days Left: "
                         "${item["estDays"].toStringAsFixed(1)} days\n"
-                        "Suggestion: ${item["suggestion"]}",
                       ),
                     ),
                   );

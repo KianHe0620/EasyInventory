@@ -34,7 +34,7 @@ class _BulkUpdatePageState extends State<BulkUpdatePage> {
         widget.itemController.updateItem(idx, updated);
       }
     });
-    Navigator.pop(context);
+    Get.back();
   }
 
   /// Return a widget that shows a thumbnail for the given imagePath.

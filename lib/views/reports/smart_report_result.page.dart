@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../models/smart_report.model.dart';
 import 'package:get/get.dart';
@@ -8,7 +7,7 @@ class SmartReportResultPage extends StatefulWidget {
   final SmartReportInput input;
   final List<SmartRecommendation> recommendations;
 
-  SmartReportResultPage({
+  const SmartReportResultPage({
     super.key,
     required this.input,
     required this.recommendations,
@@ -27,7 +26,76 @@ class _SmartReportResultPageState extends State<SmartReportResultPage> {
     setState(() {
       _appliedOverrides[r.itemId] = r.advisoryCappedQty;
     });
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Applied cap for ${r.name}: ${r.advisoryCappedQty}')));
+    Get.snackbar('Applied', 'Applied cap for ${r.name}: ${r.advisoryCappedQty}');
+  }
+
+  void _openResultHelpDialog() {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('How to read the Smart Report'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Scrollbar(
+            child: ListView(
+              shrinkWrap: true,
+              children: const [
+                _HelpRow(
+                  title: 'Baseline (per day)',
+                  desc:
+                      'The estimated average daily demand based on historical sales data using the selected demand method (Average or EMA).',
+                ),
+                _HelpRow(
+                  title: 'Boosted Demand',
+                  desc:
+                      'The baseline demand after applying the event boost factor. Used when upcoming events or promotions are expected.',
+                ),
+                _HelpRow(
+                  title: 'Variance',
+                  desc:
+                      'Indicates how much daily sales fluctuate over time. Lower variance means more stable demand.',
+                ),
+                _HelpRow(
+                  title: 'Non-Zero Days',
+                  desc:
+                      'Number of days within the analysis window where at least one unit was sold. More non-zero days improve confidence.',
+                ),
+                _HelpRow(
+                  title: 'Confidence',
+                  desc:
+                      'Represents how reliable the recommendation is, based on data consistency and availability.',
+                ),
+                _HelpRow(
+                  title: 'Safety Cap',
+                  desc:
+                      'A maximum recommended restock quantity to prevent over-ordering. It can be applied manually if shown as advisory.',
+                ),
+                _HelpRow(
+                  title: 'Suggested Quantity',
+                  desc:
+                      'The recommended restock amount needed to reach the target stock level.',
+                ),
+                _HelpRow(
+                  title: 'Apply Cap',
+                  desc:
+                      'If the suggested quantity exceeds the safety cap, you may apply the cap to limit the restock amount.',
+                ),
+                _HelpRow(
+                  title: 'Priority',
+                  desc:
+                      'Indicates urgency of restocking. High priority items should be restocked first.',
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -39,6 +107,11 @@ class _SmartReportResultPageState extends State<SmartReportResultPage> {
         title: const Text("Smart Report Result"),
         actions: [
           IconButton(
+            tooltip: 'How to read this report',
+            icon: const Icon(Icons.help_outline),
+            onPressed: _openResultHelpDialog,
+          ),
+          IconButton(
             tooltip: 'Export PDF',
             icon: const Icon(Icons.picture_as_pdf),
             onPressed: () async {
@@ -46,12 +119,7 @@ class _SmartReportResultPageState extends State<SmartReportResultPage> {
                 input: widget.input,
                 recs: widget.recommendations,
               );
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('PDF saved in Downloads:\n${file.path}'),
-                ),
-              );
+              Get.snackbar('Success', 'PDF saved in Downloads:\n${file.path}');
             },
           ),
         ],
@@ -76,8 +144,6 @@ class _SmartReportResultPageState extends State<SmartReportResultPage> {
                           Chip(label: Text(r.priority, style: const TextStyle(color: Colors.white)), backgroundColor: r.priority == "High" ? Colors.red : r.priority == "Medium" ? Colors.orange : Colors.grey)
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text('${r.reason}'),
                       const SizedBox(height: 8),
                       Text('Now ${r.currentStock} → Target ${r.targetStock}', style: const TextStyle(fontWeight: FontWeight.w600)),
                       const Divider(),
@@ -126,6 +192,24 @@ class _SmartReportResultPageState extends State<SmartReportResultPage> {
         Text(title, style: const TextStyle(fontSize: 11, color: Colors.black54)),
         const SizedBox(height: 4),
         Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+      ]),
+    );
+  }
+}
+
+class _HelpRow extends StatelessWidget {
+  final String title;
+  final String desc;
+  const _HelpRow({required this.title, required this.desc});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4),
+        Text(desc),
       ]),
     );
   }

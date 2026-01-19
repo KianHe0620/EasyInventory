@@ -3,6 +3,7 @@ import 'package:easyinventory/views/authentication/Login.dart';
 import 'package:flutter/material.dart';
 import 'package:easyinventory/views/widgets/button.global.dart';
 import 'package:easyinventory/views/widgets/text_form.global.dart';
+import 'package:get/get.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -42,20 +43,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => loading = false);
 
     if (error == null) {
-      // success
       _showMessage("Registration successful!");
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => LoginScreen()),
-      );
+      Get.offAll(()=>LoginScreen());
     } else {
       _showMessage(error);
     }
   }
 
   void _showMessage(String msg) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
+    Get.snackbar('Message', msg);
   }
 
   @override
@@ -117,13 +113,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   children: [
                     const Text('Already have an account?'),
                     TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => LoginScreen()),
-                        );
-                      },
+                      onPressed: () {Get.offAll(()=>LoginScreen());},
                       child: Text(
                         'Login',
                         style: TextStyle(
